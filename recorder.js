@@ -1,3 +1,4 @@
+(() => {
 const speakerIdInput = document.getElementById("speakerIdInput");
 const packSelect = document.getElementById("packSelect");
 const takeSelect = document.getElementById("takeSelect");
@@ -570,3 +571,4 @@ window.voiceRecorderControls = {
       .filter(Boolean);
   }
 };
+})();

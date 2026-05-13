@@ -8,8 +8,8 @@ Prototype app luyện nói và thu âm bộ dữ liệu giọng nói cá nhân t
 - `styles.css`: layout responsive
 - `app.js`: nhận diện local bằng Whisper nếu có, fallback bằng mẫu audio, gợi ý câu gần đúng, phát lại
 - `recorder.js`: thu âm từng câu, đặt tên file theo speaker, pack, câu, take
-- `month2-corpus.js`: corpus tháng 2 gồm 300 câu có metadata nhóm, phần, ưu tiên
-- `docs/month-2-voice-training-corpus.md`: tài liệu thiết kế bộ câu tháng 2
+- `month2-corpus.js`: corpus huấn luyện gồm 400 mẫu, tách 200 câu ngắn và 200 câu dài
+- `docs/personal-voice-training-corpus.md`: tài liệu bộ câu huấn luyện giọng nói cá nhân
 - `scripts/generate-dataset-manifest.js`: tạo manifest từ các file audio đã thu
 
 ## Cách chạy
@@ -77,9 +77,9 @@ npm start
 
 `tiny` nhanh hơn nhưng kém chính xác hơn `base`.
 
-## Thu âm dữ liệu tháng 2
+## Thu âm dữ liệu giọng cá nhân
 
-Recorder hiện dùng bộ `300 câu` chia theo `12 nhóm`, mỗi nhóm có `phần A` và `phần B`.
+Recorder hiện dùng bộ `400 mẫu` gồm `200 câu ngắn` và `200 câu dài`. Mỗi loại được chia thành `20 pack`, mỗi pack có `10 câu` để dễ điều hướng và thu lại.
 
 Quy trình:
 
@@ -99,7 +99,7 @@ Ghi chú:
 
 - Mỗi file chỉ chứa một câu
 - Nên thu ít nhất `2 take` cho mỗi câu
-- Các câu thuộc 60 câu ưu tiên được đánh dấu trong phần tóm tắt pack
+- Nên thu hết câu ngắn trước để app học phát âm nền, rồi tiếp tục đến câu dài
 - Sau khi copy file vào `dataset/audio/<speaker_id>`, chạy manifest để kiểm tra dữ liệu
 
 ## Review nhận diện

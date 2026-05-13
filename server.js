@@ -50,7 +50,12 @@ function sendFile(filePath, response) {
       return;
     }
 
-    response.writeHead(200, { "Content-Type": contentType });
+    response.writeHead(200, {
+      "Content-Type": contentType,
+      "Cache-Control": ext === ".html" || ext === ".js" || ext === ".css"
+        ? "no-store"
+        : "public, max-age=3600"
+    });
     response.end(data);
   });
 }
@@ -664,7 +669,8 @@ const server = http.createServer((request, response) => {
     return;
   }
 
-  const urlPath = request.url === "/" ? "/index.html" : request.url;
+  const parsedUrl = new URL(request.url, `http://${request.headers.host || "localhost"}`);
+  const urlPath = parsedUrl.pathname === "/" ? "/index.html" : parsedUrl.pathname;
   const safePath = path.normalize(urlPath).replace(/^(\.\.[\\/])+/, "");
   const filePath = path.join(rootDir, safePath);
 
