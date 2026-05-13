@@ -25,11 +25,15 @@ const SAMPLE_ENTRIES = Array.isArray(window.MONTH2_CORPUS)
   ? window.MONTH2_CORPUS.map((entry, index) => ({
       id: entry.id || `S${String(index + 1).padStart(3, "0")}`,
       sourceId: entry.originalId || entry.id || `S${String(index + 1).padStart(3, "0")}`,
+      groupId: entry.groupId || "",
+      utteranceType: entry.utteranceType || "",
       text: entry.text
     }))
   : (window.SAMPLE_SENTENCES || []).map((text, index) => ({
       id: `S${String(index + 1).padStart(3, "0")}`,
       sourceId: `S${String(index + 1).padStart(3, "0")}`,
+      groupId: "",
+      utteranceType: "",
       text
     }));
 const UI_STATES = {
@@ -108,7 +112,6 @@ let matchedSentence = null;
 let lastRecognitionResult = null;
 let autoReplayTimer = null;
 let activePlaybackId = 0;
-let samplePlaybackAudio = null;
 let hasFinalResultInCurrentSession = false;
 let hadRecognitionError = false;
 let localRecognitionRecorder = null;
@@ -182,7 +185,11 @@ function getCurrentSpeakerIdForLocalRecognition() {
 }
 
 function getAllowedSentenceIdsForLocalRecognition() {
-  return window.voiceRecorderControls?.getCurrentPackSentenceIds?.() || [];
+  return (
+    window.voiceRecorderControls?.getCurrentRecognitionSentenceIds?.() ||
+    window.voiceRecorderControls?.getCurrentPackSentenceIds?.() ||
+    []
+  );
 }
 
 function getCandidateEntriesForLocalRecognition() {
@@ -256,9 +263,7 @@ function updateControls() {
     appState === UI_STATES.PROCESSING ||
     appState === UI_STATES.UNSUPPORTED;
   replayButton.disabled =
-    !finalTranscript ||
-    (!hasSpeechPlayback() && !getMatchedAudioPathForPlayback()) ||
-    appState === UI_STATES.LISTENING;
+    !finalTranscript || !hasSpeechPlayback() || appState === UI_STATES.LISTENING;
 }
 
 function setAppState(state, message = STATUS_MESSAGES[state]) {
@@ -485,6 +490,33 @@ function renderLearningReviewPanel(message = "") {
   reviewPanelElements.status.textContent =
     message ||
     `Review status: ${hasReviewTarget ? "chờ đánh dấu đúng/sai" : "chưa có kết quả để review"}.`;
+}
+
+function isEditableElement(element) {
+  if (!element) {
+    return false;
+  }
+
+  const tagName = element.tagName?.toLowerCase();
+  return (
+    element.isContentEditable ||
+    tagName === "input" ||
+    tagName === "textarea" ||
+    tagName === "select"
+  );
+}
+
+function handleReviewShortcut(event) {
+  if (event.key !== "Enter" || event.repeat || isEditableElement(document.activeElement)) {
+    return;
+  }
+
+  if (!reviewPanelElements || reviewPanelElements.correctButton.disabled) {
+    return;
+  }
+
+  event.preventDefault();
+  handleCorrectReview();
 }
 
 function exportCorrections() {
@@ -1790,15 +1822,6 @@ function clearAutoReplayTimer() {
 function stopCurrentPlayback() {
   activePlaybackId += 1;
   synth?.cancel?.();
-
-  if (!samplePlaybackAudio) {
-    return;
-  }
-
-  samplePlaybackAudio.pause();
-  samplePlaybackAudio.removeAttribute("src");
-  samplePlaybackAudio.load();
-  samplePlaybackAudio = null;
 }
 
 function cancelPlayback() {
@@ -1956,13 +1979,18 @@ function finishLocalRecognition(matchResult) {
     return;
   }
 
-  const normalizedCorrectedText = normalizeVietnameseText(matchResult.correctedText || "");
-  const isAudioTemplateMatch = Boolean(matchResult.match?.relativePath);
-  const canUseShortAudioPlayback =
-    isAudioTemplateMatch && matchResult.confidence >= FAST_AUDIO_ACCEPT_SCORE;
+  const correctedTokenCount = normalizeVietnameseText(matchResult.correctedText || "")
+    .split(/\s+/)
+    .filter(Boolean).length;
+  const canUseShortPhrasePlayback =
+    matchResult.engine === "audio-template" &&
+    correctedTokenCount > 0 &&
+    correctedTokenCount <= 5 &&
+    matchResult.confidence >= FAST_AUDIO_ACCEPT_SCORE;
   const canUseCorrectionForPlayback =
     matchResult.confidence >= AUTO_CORRECTION_SCORE &&
-    (isLongEnoughForSentenceGuess(normalizedCorrectedText) || canUseShortAudioPlayback);
+    (isLongEnoughForSentenceGuess(normalizeVietnameseText(matchResult.correctedText || "")) ||
+      canUseShortPhrasePlayback);
   recognizedTranscript = matchResult.transcript || matchResult.correctedText;
   finalTranscript = canUseCorrectionForPlayback
     ? matchResult.correctedText
@@ -2427,57 +2455,6 @@ function loadVoices() {
   updateControls();
 }
 
-function getMatchedAudioPathForPlayback() {
-  return matchedSentence?.match?.relativePath || "";
-}
-
-function playMatchedAudioSample(source, playbackId) {
-  const audioPath = getMatchedAudioPathForPlayback();
-
-  if (!audioPath) {
-    return false;
-  }
-
-  samplePlaybackAudio = new Audio(audioPath);
-  samplePlaybackAudio.preload = "auto";
-  samplePlaybackAudio.onplay = () => {
-    if (playbackId !== activePlaybackId) {
-      return;
-    }
-
-    setAppState(
-      UI_STATES.SPEAKING,
-      source === "auto" ? "Đang phát lại mẫu giọng đã thu" : "Đang phát lại file mẫu giọng"
-    );
-  };
-  samplePlaybackAudio.onended = () => {
-    if (playbackId !== activePlaybackId) {
-      return;
-    }
-
-    samplePlaybackAudio = null;
-    setAppState(UI_STATES.READY, "Phát lại xong, bạn có thể nói tiếp");
-  };
-  samplePlaybackAudio.onerror = () => {
-    if (playbackId !== activePlaybackId) {
-      return;
-    }
-
-    samplePlaybackAudio = null;
-    speakTranscriptWithSystemVoice(source, playbackId);
-  };
-  samplePlaybackAudio.play().catch(() => {
-    if (playbackId !== activePlaybackId) {
-      return;
-    }
-
-    samplePlaybackAudio = null;
-    speakTranscriptWithSystemVoice(source, playbackId);
-  });
-
-  return true;
-}
-
 function speakTranscript(source = "manual") {
   if (!finalTranscript) {
     setAppState(UI_STATES.ERROR, "Chưa có câu nào để phát lại");
@@ -2488,15 +2465,6 @@ function speakTranscript(source = "manual") {
   clearAutoReplayTimer();
   stopCurrentPlayback();
   const playbackId = activePlaybackId;
-
-  if (playMatchedAudioSample(source, playbackId)) {
-    return;
-  }
-
-  speakTranscriptWithSystemVoice(source, playbackId);
-}
-
-function speakTranscriptWithSystemVoice(source, playbackId) {
   if (!hasSpeechPlayback()) {
     setAppState(UI_STATES.ERROR, "Trình duyệt này chưa hỗ trợ phát lại bằng giọng nói");
     return;
@@ -2819,3 +2787,4 @@ startButton.addEventListener("click", startListening);
 replayButton.addEventListener("click", () => {
   speakTranscript("manual");
 });
+document.addEventListener("keydown", handleReviewShortcut);

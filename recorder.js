@@ -560,6 +560,22 @@ initializeRecorder();
 window.voiceRecorderControls = {
   getCurrentEntry,
   getCurrentSpeakerId,
+  getCurrentRecognitionSentenceIds: () => {
+    const entry = getCurrentEntry();
+    if (!entry) {
+      return [];
+    }
+
+    const scopeEntries = entry.utteranceType
+      ? recordingEntries.filter((candidate) => candidate.utteranceType === entry.utteranceType)
+      : entry.groupId
+      ? recordingEntries.filter((candidate) => candidate.groupId === entry.groupId)
+      : recordingEntries;
+
+    return scopeEntries
+      .flatMap((candidate) => [candidate.id, candidate.originalId])
+      .filter(Boolean);
+  },
   getCurrentPackSentenceIds: () => {
     const entry = getCurrentEntry();
     if (!entry) {

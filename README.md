@@ -42,7 +42,7 @@ App có endpoint local:
 POST /api/transcribe
 ```
 
-Luồng luyện nói sẽ ưu tiên gửi audio đến endpoint này. Server gọi `scripts/transcribe-local.py` để chạy Whisper trên máy, sau đó app dùng transcript để tìm câu gần nhất trong pack hiện tại. Nếu Python/Whisper chưa sẵn sàng, app tự fallback về matcher audio mẫu.
+Luồng luyện nói sẽ ưu tiên gửi audio đến endpoint này. Server gọi `scripts/transcribe-local.py` để chạy Whisper trên máy, sau đó app dùng transcript để tìm câu gần nhất trong cùng loại câu đang luyện, ví dụ đang ở câu ngắn thì so với toàn bộ 200 câu ngắn. Nếu Python/Whisper chưa sẵn sàng, app tự fallback về matcher audio mẫu.
 
 Cài đặt một lần trên máy:
 
