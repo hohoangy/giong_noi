@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "description": "Seed file for personalized correction learning. Browser-learned rules are stored in localStorage under speech_corrections.json and can be exported here.",
+  "corrections": []
+}

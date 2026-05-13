@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Giong Noi - Tro ly giao tiep ca nhan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;700&family=Manrope:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero-card">
+        <p class="eyebrow">Trợ lý giao tiếp</p>
+        <h1>Hiểu <span>giọng nói riêng</span> của bạn</h1>
+        <p class="hero-copy">
+          Nói một câu quen thuộc, ứng dụng sửa theo cụm ngắn rồi phát lại câu
+          phù hợp khi đủ tin cậy.
+        </p>
+
+        <div class="status-row">
+          <span class="status-dot" id="statusDot"></span>
+          <span class="status-text" id="statusText" role="status" aria-live="polite">
+            Sẵn sàng để bắt đầu
+          </span>
+        </div>
+
+        <div class="control-row">
+          <button class="primary-button" id="startButton" type="button">
+            Bắt đầu nói
+          </button>
+          <button
+            class="secondary-button"
+            id="replayButton"
+            type="button"
+            disabled
+          >
+            Phát lại
+          </button>
+        </div>
+      </section>
+
+      <section class="transcript-card">
+        <div class="transcript-header">
+          <p class="section-label">App nghe</p>
+          <span class="language-pill">vi-VN</span>
+        </div>
+
+        <div class="transcript-box" id="transcriptBox">
+          <p class="placeholder-text" id="transcriptText" aria-live="polite">
+            Chưa có nội dung. Hãy nhấn “Bắt đầu nói” và đọc một câu.
+          </p>
+        </div>
+
+        <div class="guess-card">
+          <div class="guess-header">
+            <p class="section-label">App đoán</p>
+            <span class="confidence-pill" id="guessConfidence">--</span>
+          </div>
+
+          <div class="guess-box">
+            <p class="placeholder-text" id="guessText" aria-live="polite">
+              Chưa có gợi ý. Ứng dụng sẽ thử đoán câu gần nhất trong bộ câu mẫu.
+            </p>
+          </div>
+
+          <p class="meta-text" id="guessMeta">
+            Khi độ khớp đủ cao, ứng dụng sẽ dùng câu đoán để phát lại.
+          </p>
+        </div>
+      </section>
+
+      <section class="recorder-card">
+        <div class="recorder-header">
+          <div>
+            <p class="eyebrow">Bộ ghi dữ liệu</p>
+            <h2>Xây bộ mẫu <span>giọng cá nhân</span></h2>
+            <p class="hero-copy">
+              Thu từng câu ngắn và câu dài thành file chuẩn để hệ thống học
+              cách phát âm của riêng bạn.
+            </p>
+          </div>
+
+          <div class="recorder-config-grid">
+            <label class="field-group">
+              <span class="field-label">Speaker ID</span>
+              <input
+                class="field-input"
+                id="speakerIdInput"
+                type="text"
+                value="user01"
+                autocomplete="off"
+              />
+            </label>
+
+            <label class="field-group">
+              <span class="field-label">Pack</span>
+              <select class="field-input" id="packSelect"></select>
+            </label>
+
+            <label class="field-group">
+              <span class="field-label">Take</span>
+              <select class="field-input" id="takeSelect">
+                <option value="1">Take 1</option>
+                <option value="2">Take 2</option>
+                <option value="3">Take 3</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="record-target-card">
+          <div class="record-target-meta">
+            <span class="sentence-badge" id="recordingSentenceId">S001</span>
+            <span class="language-pill" id="recordingPositionText">Câu 1/1</span>
+          </div>
+
+          <p class="recording-sentence-text" id="recordingSentenceText">
+            Đang tải câu mẫu để thu âm.
+          </p>
+          <p class="meta-text" id="recordingFileName">Tên file sẽ hiện ở đây.</p>
+          <p class="meta-text" id="recordingPackSummary">
+            Pack hiện tại chưa có dữ liệu tải xuống.
+          </p>
+        </div>
+
+        <div class="recording-status-row">
+          <span class="status-dot ready" id="recordingStatusDot"></span>
+          <span class="status-text" id="recordingStatusText">
+            Sẵn sàng thu âm. Mỗi file chỉ đọc đúng một câu hoặc cụm.
+          </span>
+        </div>
+
+        <div class="recorder-control-row">
+          <button class="secondary-button" id="prevSentenceButton" type="button">
+            Mục trước
+          </button>
+          <button class="secondary-button" id="nextSentenceButton" type="button">
+            Mục tiếp
+          </button>
+          <button class="primary-button" id="recordStartButton" type="button">
+            Bắt đầu thu
+          </button>
+          <button
+            class="secondary-button"
+            id="downloadRecordingButton"
+            type="button"
+            disabled
+          >
+            Tải file
+          </button>
+        </div>
+
+        <audio id="recordingPreview" class="recording-preview" controls hidden></audio>
+
+        <div class="recording-rules">
+          <p class="recording-rule">Giữ im lặng khoảng nửa giây trước khi đọc.</p>
+          <p class="recording-rule">Đọc đúng một câu hoặc cụm, tốc độ tự nhiên, không sửa giữa chừng.</p>
+          <p class="recording-rule">Nếu nói sai, thu lại take mới thay vì cắt ghép file cũ.</p>
+        </div>
+      </section>
+    </main>
+
+    <script src="./month2-corpus.js"></script>
+    <script src="./app.js"></script>
+    <script src="./voice-matcher.js"></script>
+    <script src="./recorder.js"></script>
+  </body>
+</html>

@@ -1,0 +1,1006 @@
+{
+  "version": 3,
+  "description": "Personal speech phrase dataset generated from the 200 short utterances.",
+  "phrases": [
+    {
+      "id": "P001",
+      "text": "uống nước",
+      "priority": 3
+    },
+    {
+      "id": "P002",
+      "text": "ăn cơm",
+      "priority": 3
+    },
+    {
+      "id": "P003",
+      "text": "đi vệ sinh",
+      "priority": 3
+    },
+    {
+      "id": "P004",
+      "text": "nghỉ một chút",
+      "priority": 3
+    },
+    {
+      "id": "P005",
+      "text": "đổi tư thế",
+      "priority": 3
+    },
+    {
+      "id": "P006",
+      "text": "ngồi dậy",
+      "priority": 3
+    },
+    {
+      "id": "P007",
+      "text": "nằm xuống",
+      "priority": 3
+    },
+    {
+      "id": "P008",
+      "text": "mở cửa",
+      "priority": 3
+    },
+    {
+      "id": "P009",
+      "text": "đóng cửa",
+      "priority": 3
+    },
+    {
+      "id": "P010",
+      "text": "bật đèn",
+      "priority": 3
+    },
+    {
+      "id": "P011",
+      "text": "tắt đèn",
+      "priority": 3
+    },
+    {
+      "id": "P012",
+      "text": "mở quạt",
+      "priority": 3
+    },
+    {
+      "id": "P013",
+      "text": "tắt quạt",
+      "priority": 3
+    },
+    {
+      "id": "P014",
+      "text": "lấy áo",
+      "priority": 3
+    },
+    {
+      "id": "P015",
+      "text": "lấy khăn",
+      "priority": 3
+    },
+    {
+      "id": "P016",
+      "text": "lấy điện thoại",
+      "priority": 3
+    },
+    {
+      "id": "P017",
+      "text": "giúp tôi",
+      "priority": 3
+    },
+    {
+      "id": "P018",
+      "text": "đợi chút",
+      "priority": 3
+    },
+    {
+      "id": "P019",
+      "text": "không sao",
+      "priority": 3
+    },
+    {
+      "id": "P020",
+      "text": "cảm ơn",
+      "priority": 3
+    },
+    {
+      "id": "P021",
+      "text": "tôi đau",
+      "priority": 3
+    },
+    {
+      "id": "P022",
+      "text": "đau đầu",
+      "priority": 3
+    },
+    {
+      "id": "P023",
+      "text": "đau vai",
+      "priority": 3
+    },
+    {
+      "id": "P024",
+      "text": "đau cổ",
+      "priority": 3
+    },
+    {
+      "id": "P025",
+      "text": "đau lưng",
+      "priority": 3
+    },
+    {
+      "id": "P026",
+      "text": "đau bụng",
+      "priority": 3
+    },
+    {
+      "id": "P027",
+      "text": "hơi mệt",
+      "priority": 3
+    },
+    {
+      "id": "P028",
+      "text": "rất mệt",
+      "priority": 3
+    },
+    {
+      "id": "P029",
+      "text": "khó thở",
+      "priority": 3
+    },
+    {
+      "id": "P030",
+      "text": "chóng mặt",
+      "priority": 3
+    },
+    {
+      "id": "P031",
+      "text": "buồn nôn",
+      "priority": 3
+    },
+    {
+      "id": "P032",
+      "text": "khát nước",
+      "priority": 3
+    },
+    {
+      "id": "P033",
+      "text": "muốn ngủ",
+      "priority": 3
+    },
+    {
+      "id": "P034",
+      "text": "uống thuốc",
+      "priority": 3
+    },
+    {
+      "id": "P035",
+      "text": "gọi bác sĩ",
+      "priority": 3
+    },
+    {
+      "id": "P036",
+      "text": "đo nhiệt độ",
+      "priority": 3
+    },
+    {
+      "id": "P037",
+      "text": "kiểm tra huyết áp",
+      "priority": 3
+    },
+    {
+      "id": "P038",
+      "text": "tôi ổn",
+      "priority": 3
+    },
+    {
+      "id": "P039",
+      "text": "không ổn",
+      "priority": 3
+    },
+    {
+      "id": "P040",
+      "text": "cần nghỉ",
+      "priority": 3
+    },
+    {
+      "id": "P041",
+      "text": "ăn sáng",
+      "priority": 3
+    },
+    {
+      "id": "P042",
+      "text": "ăn trưa",
+      "priority": 3
+    },
+    {
+      "id": "P043",
+      "text": "ăn tối",
+      "priority": 3
+    },
+    {
+      "id": "P044",
+      "text": "uống sữa",
+      "priority": 3
+    },
+    {
+      "id": "P045",
+      "text": "uống trà",
+      "priority": 3
+    },
+    {
+      "id": "P046",
+      "text": "uống cà phê",
+      "priority": 3
+    },
+    {
+      "id": "P047",
+      "text": "thêm cơm",
+      "priority": 3
+    },
+    {
+      "id": "P048",
+      "text": "thêm rau",
+      "priority": 3
+    },
+    {
+      "id": "P049",
+      "text": "ít thôi",
+      "priority": 3
+    },
+    {
+      "id": "P050",
+      "text": "nhiều quá",
+      "priority": 3
+    },
+    {
+      "id": "P051",
+      "text": "không cay",
+      "priority": 3
+    },
+    {
+      "id": "P052",
+      "text": "không mặn",
+      "priority": 3
+    },
+    {
+      "id": "P053",
+      "text": "hơi nóng",
+      "priority": 3
+    },
+    {
+      "id": "P054",
+      "text": "hơi lạnh",
+      "priority": 3
+    },
+    {
+      "id": "P055",
+      "text": "đủ rồi",
+      "priority": 3
+    },
+    {
+      "id": "P056",
+      "text": "no rồi",
+      "priority": 3
+    },
+    {
+      "id": "P057",
+      "text": "đói quá",
+      "priority": 3
+    },
+    {
+      "id": "P058",
+      "text": "hâm nóng",
+      "priority": 3
+    },
+    {
+      "id": "P059",
+      "text": "lấy muỗng",
+      "priority": 3
+    },
+    {
+      "id": "P060",
+      "text": "lấy đũa",
+      "priority": 3
+    },
+    {
+      "id": "P061",
+      "text": "xin chào",
+      "priority": 3
+    },
+    {
+      "id": "P062",
+      "text": "chào bạn",
+      "priority": 3
+    },
+    {
+      "id": "P063",
+      "text": "cảm ơn bạn",
+      "priority": 3
+    },
+    {
+      "id": "P064",
+      "text": "xin lỗi",
+      "priority": 3
+    },
+    {
+      "id": "P065",
+      "text": "được không",
+      "priority": 3
+    },
+    {
+      "id": "P066",
+      "text": "ở đâu",
+      "priority": 3
+    },
+    {
+      "id": "P067",
+      "text": "mấy giờ",
+      "priority": 3
+    },
+    {
+      "id": "P068",
+      "text": "bao lâu",
+      "priority": 3
+    },
+    {
+      "id": "P069",
+      "text": "nói lại",
+      "priority": 3
+    },
+    {
+      "id": "P070",
+      "text": "nói chậm",
+      "priority": 3
+    },
+    {
+      "id": "P071",
+      "text": "nghe rõ",
+      "priority": 3
+    },
+    {
+      "id": "P072",
+      "text": "không nghe",
+      "priority": 3
+    },
+    {
+      "id": "P073",
+      "text": "tôi hiểu",
+      "priority": 3
+    },
+    {
+      "id": "P074",
+      "text": "chưa hiểu",
+      "priority": 3
+    },
+    {
+      "id": "P075",
+      "text": "đúng rồi",
+      "priority": 3
+    },
+    {
+      "id": "P076",
+      "text": "sai rồi",
+      "priority": 3
+    },
+    {
+      "id": "P077",
+      "text": "đợi tôi",
+      "priority": 3
+    },
+    {
+      "id": "P078",
+      "text": "gọi lại",
+      "priority": 3
+    },
+    {
+      "id": "P079",
+      "text": "nhắn tin",
+      "priority": 3
+    },
+    {
+      "id": "P080",
+      "text": "hẹn gặp",
+      "priority": 3
+    },
+    {
+      "id": "P081",
+      "text": "gọi mẹ",
+      "priority": 3
+    },
+    {
+      "id": "P082",
+      "text": "gọi ba",
+      "priority": 3
+    },
+    {
+      "id": "P083",
+      "text": "gọi anh",
+      "priority": 3
+    },
+    {
+      "id": "P084",
+      "text": "gọi chị",
+      "priority": 3
+    },
+    {
+      "id": "P085",
+      "text": "gọi em",
+      "priority": 3
+    },
+    {
+      "id": "P086",
+      "text": "mẹ đâu",
+      "priority": 3
+    },
+    {
+      "id": "P087",
+      "text": "ba đâu",
+      "priority": 3
+    },
+    {
+      "id": "P088",
+      "text": "về nhà",
+      "priority": 3
+    },
+    {
+      "id": "P089",
+      "text": "ở nhà",
+      "priority": 3
+    },
+    {
+      "id": "P090",
+      "text": "ra ngoài",
+      "priority": 3
+    },
+    {
+      "id": "P091",
+      "text": "vào phòng",
+      "priority": 3
+    },
+    {
+      "id": "P092",
+      "text": "xuống bếp",
+      "priority": 3
+    },
+    {
+      "id": "P093",
+      "text": "lên lầu",
+      "priority": 3
+    },
+    {
+      "id": "P094",
+      "text": "mở tivi",
+      "priority": 3
+    },
+    {
+      "id": "P095",
+      "text": "tắt tivi",
+      "priority": 3
+    },
+    {
+      "id": "P096",
+      "text": "dọn bàn",
+      "priority": 3
+    },
+    {
+      "id": "P097",
+      "text": "quét nhà",
+      "priority": 3
+    },
+    {
+      "id": "P098",
+      "text": "giặt đồ",
+      "priority": 3
+    },
+    {
+      "id": "P099",
+      "text": "phơi đồ",
+      "priority": 3
+    },
+    {
+      "id": "P100",
+      "text": "khóa cửa",
+      "priority": 3
+    },
+    {
+      "id": "P101",
+      "text": "đi làm",
+      "priority": 3
+    },
+    {
+      "id": "P102",
+      "text": "họp nhóm",
+      "priority": 3
+    },
+    {
+      "id": "P103",
+      "text": "gửi báo cáo",
+      "priority": 3
+    },
+    {
+      "id": "P104",
+      "text": "mở tài liệu",
+      "priority": 3
+    },
+    {
+      "id": "P105",
+      "text": "chia sẻ màn hình",
+      "priority": 3
+    },
+    {
+      "id": "P106",
+      "text": "gửi email",
+      "priority": 3
+    },
+    {
+      "id": "P107",
+      "text": "kiểm tra lịch",
+      "priority": 3
+    },
+    {
+      "id": "P108",
+      "text": "đổi lịch",
+      "priority": 3
+    },
+    {
+      "id": "P109",
+      "text": "xin nghỉ",
+      "priority": 3
+    },
+    {
+      "id": "P110",
+      "text": "hoàn thành rồi",
+      "priority": 3
+    },
+    {
+      "id": "P111",
+      "text": "cần thêm giờ",
+      "priority": 3
+    },
+    {
+      "id": "P112",
+      "text": "bắt đầu họp",
+      "priority": 3
+    },
+    {
+      "id": "P113",
+      "text": "kết thúc họp",
+      "priority": 3
+    },
+    {
+      "id": "P114",
+      "text": "ghi chú lại",
+      "priority": 3
+    },
+    {
+      "id": "P115",
+      "text": "xem giúp",
+      "priority": 3
+    },
+    {
+      "id": "P116",
+      "text": "gọi khách",
+      "priority": 3
+    },
+    {
+      "id": "P117",
+      "text": "trả lời sau",
+      "priority": 3
+    },
+    {
+      "id": "P118",
+      "text": "ưu tiên việc này",
+      "priority": 3
+    },
+    {
+      "id": "P119",
+      "text": "máy chậm",
+      "priority": 3
+    },
+    {
+      "id": "P120",
+      "text": "mất mạng",
+      "priority": 3
+    },
+    {
+      "id": "P121",
+      "text": "mở ứng dụng",
+      "priority": 3
+    },
+    {
+      "id": "P122",
+      "text": "đóng ứng dụng",
+      "priority": 3
+    },
+    {
+      "id": "P123",
+      "text": "tải lại",
+      "priority": 3
+    },
+    {
+      "id": "P124",
+      "text": "lưu lại",
+      "priority": 3
+    },
+    {
+      "id": "P125",
+      "text": "xóa nội dung",
+      "priority": 3
+    },
+    {
+      "id": "P126",
+      "text": "phát lại",
+      "priority": 3
+    },
+    {
+      "id": "P127",
+      "text": "tăng âm lượng",
+      "priority": 3
+    },
+    {
+      "id": "P128",
+      "text": "giảm âm lượng",
+      "priority": 3
+    },
+    {
+      "id": "P129",
+      "text": "bật bluetooth",
+      "priority": 3
+    },
+    {
+      "id": "P130",
+      "text": "tắt bluetooth",
+      "priority": 3
+    },
+    {
+      "id": "P131",
+      "text": "mở camera",
+      "priority": 3
+    },
+    {
+      "id": "P132",
+      "text": "chụp ảnh",
+      "priority": 3
+    },
+    {
+      "id": "P133",
+      "text": "gửi ảnh",
+      "priority": 3
+    },
+    {
+      "id": "P134",
+      "text": "kiểm tra pin",
+      "priority": 3
+    },
+    {
+      "id": "P135",
+      "text": "cắm sạc",
+      "priority": 3
+    },
+    {
+      "id": "P136",
+      "text": "mở bản đồ",
+      "priority": 3
+    },
+    {
+      "id": "P137",
+      "text": "tìm file",
+      "priority": 3
+    },
+    {
+      "id": "P138",
+      "text": "đăng nhập",
+      "priority": 3
+    },
+    {
+      "id": "P139",
+      "text": "quên mật khẩu",
+      "priority": 3
+    },
+    {
+      "id": "P140",
+      "text": "báo lỗi",
+      "priority": 3
+    },
+    {
+      "id": "P141",
+      "text": "đi thẳng",
+      "priority": 3
+    },
+    {
+      "id": "P142",
+      "text": "rẽ trái",
+      "priority": 3
+    },
+    {
+      "id": "P143",
+      "text": "rẽ phải",
+      "priority": 3
+    },
+    {
+      "id": "P144",
+      "text": "dừng lại",
+      "priority": 3
+    },
+    {
+      "id": "P145",
+      "text": "đi chậm",
+      "priority": 3
+    },
+    {
+      "id": "P146",
+      "text": "đi nhanh",
+      "priority": 3
+    },
+    {
+      "id": "P147",
+      "text": "chờ xe",
+      "priority": 3
+    },
+    {
+      "id": "P148",
+      "text": "gọi xe",
+      "priority": 3
+    },
+    {
+      "id": "P149",
+      "text": "xuống xe",
+      "priority": 3
+    },
+    {
+      "id": "P150",
+      "text": "lên xe",
+      "priority": 3
+    },
+    {
+      "id": "P151",
+      "text": "đến nơi",
+      "priority": 3
+    },
+    {
+      "id": "P152",
+      "text": "bị lạc",
+      "priority": 3
+    },
+    {
+      "id": "P153",
+      "text": "hỏi đường",
+      "priority": 3
+    },
+    {
+      "id": "P154",
+      "text": "gần đây",
+      "priority": 3
+    },
+    {
+      "id": "P155",
+      "text": "xa quá",
+      "priority": 3
+    },
+    {
+      "id": "P156",
+      "text": "kẹt xe",
+      "priority": 3
+    },
+    {
+      "id": "P157",
+      "text": "về công ty",
+      "priority": 3
+    },
+    {
+      "id": "P158",
+      "text": "ra cổng",
+      "priority": 3
+    },
+    {
+      "id": "P159",
+      "text": "vào nhà",
+      "priority": 3
+    },
+    {
+      "id": "P160",
+      "text": "đợi ngoài cửa",
+      "priority": 3
+    },
+    {
+      "id": "P161",
+      "text": "tôi vui",
+      "priority": 3
+    },
+    {
+      "id": "P162",
+      "text": "tôi buồn",
+      "priority": 3
+    },
+    {
+      "id": "P163",
+      "text": "tôi lo",
+      "priority": 3
+    },
+    {
+      "id": "P164",
+      "text": "tôi sợ",
+      "priority": 3
+    },
+    {
+      "id": "P165",
+      "text": "tôi giận",
+      "priority": 3
+    },
+    {
+      "id": "P166",
+      "text": "tôi ổn",
+      "priority": 3
+    },
+    {
+      "id": "P167",
+      "text": "hơi căng thẳng",
+      "priority": 3
+    },
+    {
+      "id": "P168",
+      "text": "rất thoải mái",
+      "priority": 3
+    },
+    {
+      "id": "P169",
+      "text": "muốn yên tĩnh",
+      "priority": 3
+    },
+    {
+      "id": "P170",
+      "text": "cần bình tĩnh",
+      "priority": 3
+    },
+    {
+      "id": "P171",
+      "text": "khó chịu",
+      "priority": 3
+    },
+    {
+      "id": "P172",
+      "text": "dễ chịu",
+      "priority": 3
+    },
+    {
+      "id": "P173",
+      "text": "mệt quá",
+      "priority": 3
+    },
+    {
+      "id": "P174",
+      "text": "vui hơn",
+      "priority": 3
+    },
+    {
+      "id": "P175",
+      "text": "ổn hơn",
+      "priority": 3
+    },
+    {
+      "id": "P176",
+      "text": "tự tin",
+      "priority": 3
+    },
+    {
+      "id": "P177",
+      "text": "bối rối",
+      "priority": 3
+    },
+    {
+      "id": "P178",
+      "text": "ngại quá",
+      "priority": 3
+    },
+    {
+      "id": "P179",
+      "text": "không thích",
+      "priority": 3
+    },
+    {
+      "id": "P180",
+      "text": "thích lắm",
+      "priority": 3
+    },
+    {
+      "id": "P181",
+      "text": "giúp ngay",
+      "priority": 3
+    },
+    {
+      "id": "P182",
+      "text": "gọi cấp cứu",
+      "priority": 3
+    },
+    {
+      "id": "P183",
+      "text": "gọi người nhà",
+      "priority": 3
+    },
+    {
+      "id": "P184",
+      "text": "khó thở quá",
+      "priority": 3
+    },
+    {
+      "id": "P185",
+      "text": "đau nhiều",
+      "priority": 3
+    },
+    {
+      "id": "P186",
+      "text": "ngã rồi",
+      "priority": 3
+    },
+    {
+      "id": "P187",
+      "text": "không đứng được",
+      "priority": 3
+    },
+    {
+      "id": "P188",
+      "text": "không nói được",
+      "priority": 3
+    },
+    {
+      "id": "P189",
+      "text": "mở cửa ngay",
+      "priority": 3
+    },
+    {
+      "id": "P190",
+      "text": "đưa thuốc",
+      "priority": 3
+    },
+    {
+      "id": "P191",
+      "text": "đưa nước",
+      "priority": 3
+    },
+    {
+      "id": "P192",
+      "text": "đưa điện thoại",
+      "priority": 3
+    },
+    {
+      "id": "P193",
+      "text": "đừng đi",
+      "priority": 3
+    },
+    {
+      "id": "P194",
+      "text": "ở lại đây",
+      "priority": 3
+    },
+    {
+      "id": "P195",
+      "text": "bật chuông",
+      "priority": 3
+    },
+    {
+      "id": "P196",
+      "text": "kiểm tra tôi",
+      "priority": 3
+    },
+    {
+      "id": "P197",
+      "text": "đưa tôi đi",
+      "priority": 3
+    },
+    {
+      "id": "P198",
+      "text": "cần xe ngay",
+      "priority": 3
+    },
+    {
+      "id": "P199",
+      "text": "rất nguy hiểm",
+      "priority": 3
+    },
+    {
+      "id": "P200",
+      "text": "bình tĩnh",
+      "priority": 3
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "voice-coach-week-1",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "manifest": "node scripts/generate-dataset-manifest.js",
+    "check": "node --check server.js && node --check app.js && node --check voice-matcher.js && node --check recorder.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.9.1"
+  }
+}

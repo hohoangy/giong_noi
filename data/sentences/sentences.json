@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "description": "Sentence dataset storage entrypoint. The active long-sentence dataset is intentionally preserved in month2-corpus.js so the recorder, audio manifest, and sentence IDs stay compatible.",
+  "source": "../../month2-corpus.js",
+  "usage": [
+    "sentence matching",
+    "context",
+    "final output",
+    "confidence ranking"
+  ]
+}

@@ -1,0 +1,7 @@
+node_modules/
+learned/
+.history/
+scripts/__pycache__/
+*.pyc
+dataset/audio/**/*.webm
+dataset/manifest.*.json
