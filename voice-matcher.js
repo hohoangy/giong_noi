@@ -752,6 +752,7 @@ async function loadVoiceTemplateFromTake(speakerId, sentence, take) {
       text: sentence.sentence_text,
       take: take.take,
       fileName: take.file_name,
+      relativePath: take.relative_path,
       features: await extractVoiceFeatures(blob)
     };
   } catch (error) {
@@ -869,6 +870,7 @@ async function matchVoiceToTemplates(blob, speakerId, options = {}) {
       sourceSentenceId: bestScoredSentence.template.sourceSentenceId,
       take: bestScoredSentence.template.take,
       fileName: bestScoredSentence.template.fileName,
+      relativePath: bestScoredSentence.template.relativePath,
       rawConfidence: bestScoredSentence.score,
       bestTakeScore: bestScoredSentence.bestTakeScore,
       takeCount: bestScoredSentence.takeCount,

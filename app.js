@@ -108,6 +108,7 @@ let matchedSentence = null;
 let lastRecognitionResult = null;
 let autoReplayTimer = null;
 let activePlaybackId = 0;
+let samplePlaybackAudio = null;
 let hasFinalResultInCurrentSession = false;
 let hadRecognitionError = false;
 let localRecognitionRecorder = null;
@@ -255,7 +256,9 @@ function updateControls() {
     appState === UI_STATES.PROCESSING ||
     appState === UI_STATES.UNSUPPORTED;
   replayButton.disabled =
-    !finalTranscript || !hasSpeechPlayback() || appState === UI_STATES.LISTENING;
+    !finalTranscript ||
+    (!hasSpeechPlayback() && !getMatchedAudioPathForPlayback()) ||
+    appState === UI_STATES.LISTENING;
 }
 
 function setAppState(state, message = STATUS_MESSAGES[state]) {
@@ -1784,15 +1787,23 @@ function clearAutoReplayTimer() {
   autoReplayTimer = null;
 }
 
-function cancelPlayback() {
-  clearAutoReplayTimer();
+function stopCurrentPlayback() {
+  activePlaybackId += 1;
+  synth?.cancel?.();
 
-  if (!hasSpeechPlayback()) {
+  if (!samplePlaybackAudio) {
     return;
   }
 
-  activePlaybackId += 1;
-  synth.cancel();
+  samplePlaybackAudio.pause();
+  samplePlaybackAudio.removeAttribute("src");
+  samplePlaybackAudio.load();
+  samplePlaybackAudio = null;
+}
+
+function cancelPlayback() {
+  clearAutoReplayTimer();
+  stopCurrentPlayback();
 }
 
 function releaseLocalRecognitionStream() {
@@ -1945,9 +1956,13 @@ function finishLocalRecognition(matchResult) {
     return;
   }
 
+  const normalizedCorrectedText = normalizeVietnameseText(matchResult.correctedText || "");
+  const isAudioTemplateMatch = Boolean(matchResult.match?.relativePath);
+  const canUseShortAudioPlayback =
+    isAudioTemplateMatch && matchResult.confidence >= FAST_AUDIO_ACCEPT_SCORE;
   const canUseCorrectionForPlayback =
     matchResult.confidence >= AUTO_CORRECTION_SCORE &&
-    isLongEnoughForSentenceGuess(normalizeVietnameseText(matchResult.correctedText || ""));
+    (isLongEnoughForSentenceGuess(normalizedCorrectedText) || canUseShortAudioPlayback);
   recognizedTranscript = matchResult.transcript || matchResult.correctedText;
   finalTranscript = canUseCorrectionForPlayback
     ? matchResult.correctedText
@@ -2412,6 +2427,57 @@ function loadVoices() {
   updateControls();
 }
 
+function getMatchedAudioPathForPlayback() {
+  return matchedSentence?.match?.relativePath || "";
+}
+
+function playMatchedAudioSample(source, playbackId) {
+  const audioPath = getMatchedAudioPathForPlayback();
+
+  if (!audioPath) {
+    return false;
+  }
+
+  samplePlaybackAudio = new Audio(audioPath);
+  samplePlaybackAudio.preload = "auto";
+  samplePlaybackAudio.onplay = () => {
+    if (playbackId !== activePlaybackId) {
+      return;
+    }
+
+    setAppState(
+      UI_STATES.SPEAKING,
+      source === "auto" ? "Đang phát lại mẫu giọng đã thu" : "Đang phát lại file mẫu giọng"
+    );
+  };
+  samplePlaybackAudio.onended = () => {
+    if (playbackId !== activePlaybackId) {
+      return;
+    }
+
+    samplePlaybackAudio = null;
+    setAppState(UI_STATES.READY, "Phát lại xong, bạn có thể nói tiếp");
+  };
+  samplePlaybackAudio.onerror = () => {
+    if (playbackId !== activePlaybackId) {
+      return;
+    }
+
+    samplePlaybackAudio = null;
+    speakTranscriptWithSystemVoice(source, playbackId);
+  };
+  samplePlaybackAudio.play().catch(() => {
+    if (playbackId !== activePlaybackId) {
+      return;
+    }
+
+    samplePlaybackAudio = null;
+    speakTranscriptWithSystemVoice(source, playbackId);
+  });
+
+  return true;
+}
+
 function speakTranscript(source = "manual") {
   if (!finalTranscript) {
     setAppState(UI_STATES.ERROR, "Chưa có câu nào để phát lại");
@@ -2419,14 +2485,24 @@ function speakTranscript(source = "manual") {
     return;
   }
 
+  clearAutoReplayTimer();
+  stopCurrentPlayback();
+  const playbackId = activePlaybackId;
+
+  if (playMatchedAudioSample(source, playbackId)) {
+    return;
+  }
+
+  speakTranscriptWithSystemVoice(source, playbackId);
+}
+
+function speakTranscriptWithSystemVoice(source, playbackId) {
   if (!hasSpeechPlayback()) {
     setAppState(UI_STATES.ERROR, "Trình duyệt này chưa hỗ trợ phát lại bằng giọng nói");
     return;
   }
 
-  clearAutoReplayTimer();
   loadVoices();
-  const playbackId = ++activePlaybackId;
   synth.cancel();
   synth.resume();
 
