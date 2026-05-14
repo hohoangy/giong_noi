@@ -67,6 +67,12 @@ const MAX_PHRASE_NGRAM = 5;
 const PHRASE_AUTO_CONFIDENCE = 0.68;
 const PHRASE_SUGGEST_CONFIDENCE = 0.5;
 const PHRASE_DATASET_URL = "data/phrases/phrases.json";
+const SHORT_PHRASE_MAX_WORDS = 3;
+const SHORT_PHRASE_AUTO_CONFIDENCE = 0.66;
+const SHORT_PHRASE_ACCEPT_CONFIDENCE = 0.46;
+const SHORT_PHRASE_REVIEW_BOOST_PER_COUNT = 0.025;
+const SHORT_PHRASE_MAX_REVIEW_BOOST = 0.18;
+const SHORT_PHRASE_REPEAT_THRESHOLD = 3;
 const LEARNED_AUDIO_CORRECTION_SCORE = 0.68;
 const VOICE_TEMPLATE_CORRECTION_SCORE = 0.68;
 const FAST_AUDIO_ACCEPT_SCORE = 0.74;
@@ -214,6 +220,13 @@ function getCandidateEntriesForLocalRecognition() {
   return SAMPLE_ENTRIES.filter(
     (entry) => allowedSentenceIds.has(entry.id) || allowedSentenceIds.has(entry.sourceId)
   );
+}
+
+function getCandidateSentenceEntriesForLocalRecognition() {
+  return getCandidateEntriesForLocalRecognition().filter((entry) => {
+    const tokenCount = tokenizeText(entry.text).length;
+    return entry.utteranceType === "long" || entry.groupId === "LONG" || tokenCount > SHORT_PHRASE_MAX_WORDS;
+  });
 }
 
 function getCurrentTargetEntryForLocalRecognition() {
@@ -378,13 +391,20 @@ function renderMatchedSentence(match, usesMatchForPlayback = false) {
         )
         .join(", ")}.`
     : "";
+  const inputTypeText = match.inputType
+    ? ` Input type: ${match.inputType === "short_phrase" ? "short phrase" : "sentence"}.`
+    : "";
+  const engineText = match.engineUsed ? ` Engine used: ${match.engineUsed}.` : "";
+  const learningSourceText = match.learningSources?.length
+    ? ` Learning source: ${match.learningSources.join(", ")}.`
+    : "";
   guessMeta.textContent = usesMatchForPlayback
     ? `Raw STT: "${match.rawText || match.originalText}". App nghe: "${match.originalText}". Confidence: ${Math.round(
         match.confidence * 100
-      )}%.${correctionLayerText}${keywordText}${topCandidateText}${phraseCorrectionTextValue}${lightCorrectionText}${suggestedCorrectionText} Độ khớp đủ cao, app dùng câu đoán để phát lại.${debugText}`
+      )}%.${inputTypeText}${engineText}${learningSourceText}${correctionLayerText}${keywordText}${topCandidateText}${phraseCorrectionTextValue}${lightCorrectionText}${suggestedCorrectionText} Độ khớp đủ cao, app dùng câu đoán để phát lại.${debugText}`
     : `Raw STT: "${match.rawText || match.originalText}". App nghe: "${match.originalText}". Confidence: ${Math.round(
         match.confidence * 100
-      )}%.${correctionLayerText}${keywordText}${topCandidateText}${phraseCorrectionTextValue}${lightCorrectionText}${suggestedCorrectionText} Độ khớp thấp, app chỉ dùng phrase/raw, không tự phát nguyên câu dài.${debugText}`;
+      )}%.${inputTypeText}${engineText}${learningSourceText}${correctionLayerText}${keywordText}${topCandidateText}${phraseCorrectionTextValue}${lightCorrectionText}${suggestedCorrectionText} Độ khớp thấp, app chỉ dùng phrase/raw, không tự phát nguyên câu dài.${debugText}`;
   renderLearningReviewPanel();
 }
 
@@ -1354,6 +1374,11 @@ function runHybridCorrectionPipeline(inputText, options = {}) {
   };
 }
 
+function detectInputType(text) {
+  const tokenCount = tokenizeText(text).length;
+  return tokenCount > SHORT_PHRASE_MAX_WORDS ? "sentence" : "short_phrase";
+}
+
 function loadReviews() {
   try {
     const raw = window.localStorage.getItem(SPEECH_REVIEWS_STORAGE_KEY);
@@ -1369,6 +1394,290 @@ function saveReview(review) {
   reviews.push(review);
   window.localStorage.setItem(SPEECH_REVIEWS_STORAGE_KEY, JSON.stringify(reviews, null, 2));
   return review;
+}
+
+function getShortPhraseLearningStats() {
+  const statsByPhrase = new Map();
+
+  const ensureStats = (text) => {
+    const normalized = normalizeText(text);
+    if (!normalized || tokenizeText(normalized).length > SHORT_PHRASE_MAX_WORDS) {
+      return null;
+    }
+
+    if (!statsByPhrase.has(normalized)) {
+      statsByPhrase.set(normalized, {
+        reviewCorrectCount: 0,
+        correctionMemoryCount: 0,
+        repeatedCorrectCount: 0
+      });
+    }
+
+    return statsByPhrase.get(normalized);
+  };
+
+  for (const review of loadReviews()) {
+    const correctedText = review?.correctedText || "";
+    const stats = ensureStats(correctedText);
+    if (!stats) {
+      continue;
+    }
+
+    if (review.isCorrect) {
+      stats.reviewCorrectCount += 1;
+      stats.repeatedCorrectCount += 1;
+    }
+
+    if (normalizeText(review.heardText || "") !== normalizeText(correctedText)) {
+      stats.correctionMemoryCount += 1;
+    }
+  }
+
+  for (const rule of learnedCorrections) {
+    const stats = ensureStats(rule.correct);
+    if (!stats) {
+      continue;
+    }
+
+    stats.correctionMemoryCount += Number(rule.learnedCount || rule.count || 1);
+  }
+
+  return statsByPhrase;
+}
+
+function getShortPhraseCandidates() {
+  const candidatesByText = new Map();
+
+  const addCandidate = (text, options = {}) => {
+    const record = normalizePhraseRecord(
+      {
+        id: options.id,
+        text,
+        priority: options.priority || 1
+      },
+      candidatesByText.size
+    );
+
+    if (!record || record.tokenCount > SHORT_PHRASE_MAX_WORDS) {
+      return;
+    }
+
+    const existing = candidatesByText.get(record.normalizedText);
+    const source = options.source || "phrase dataset";
+
+    if (existing) {
+      existing.priority = Math.max(existing.priority, record.priority);
+      if (!existing.sources.includes(source)) {
+        existing.sources.push(source);
+      }
+      return;
+    }
+
+    candidatesByText.set(record.normalizedText, {
+      ...record,
+      sourceId: options.sourceId || options.id || record.id,
+      sources: [source]
+    });
+  };
+
+  for (const phrase of phraseDatasetEntries) {
+    if (phrase.tokenCount <= SHORT_PHRASE_MAX_WORDS) {
+      addCandidate(phrase.text, {
+        id: phrase.id,
+        priority: phrase.priority,
+        source: "phrase dataset"
+      });
+
+      for (const token of phrase.tokens) {
+        addCandidate(token, {
+          priority: Math.max(1, phrase.priority - 1),
+          source: "word dataset"
+        });
+      }
+    }
+  }
+
+  for (const entry of SAMPLE_ENTRIES) {
+    const tokenCount = tokenizeText(entry.text).length;
+    if (
+      tokenCount <= SHORT_PHRASE_MAX_WORDS ||
+      entry.utteranceType === "short" ||
+      entry.groupId === "SHORT"
+    ) {
+      addCandidate(entry.text, {
+        id: entry.id,
+        sourceId: entry.sourceId,
+        priority: 3,
+        source: "short corpus"
+      });
+    }
+  }
+
+  for (const review of loadReviews()) {
+    if (review?.correctedText) {
+      addCandidate(review.correctedText, {
+        priority: review.isCorrect ? 4 : 3,
+        source: review.isCorrect ? "review memory" : "correction memory"
+      });
+    }
+  }
+
+  for (const rule of learnedCorrections) {
+    if (rule.correct) {
+      addCandidate(rule.correct, {
+        priority: Math.min(5, 3 + Math.floor((rule.learnedCount || rule.count || 1) / 3)),
+        source: "correction memory"
+      });
+    }
+  }
+
+  return Array.from(candidatesByText.values());
+}
+
+function getLearningSourcesForPhrase(candidate, stats, hybridCorrection) {
+  const sources = new Set(candidate?.sources || []);
+
+  if (hybridCorrection?.appliedTokenCorrections?.length) {
+    sources.add("correction memory");
+  }
+
+  if (stats?.correctionMemoryCount > 0) {
+    sources.add("correction memory");
+  }
+
+  if (stats?.reviewCorrectCount > 0) {
+    sources.add("review memory");
+  }
+
+  if (stats?.repeatedCorrectCount >= SHORT_PHRASE_REPEAT_THRESHOLD) {
+    sources.add("repeated correct phrases");
+  }
+
+  return Array.from(sources);
+}
+
+function runShortPhraseEngine(inputText, options = {}) {
+  const hybridCorrection = runHybridCorrectionPipeline(inputText, {
+    trackCorrectionUsage: Boolean(options.trackCorrectionUsage)
+  });
+  const normalizedInput = normalizeText(inputText);
+  const normalizedTextForMatching = hybridCorrection.correctedNormalizedText || normalizedInput;
+  const inputTokens = normalizedTextForMatching.split(" ").filter(Boolean);
+  const candidates = getShortPhraseCandidates();
+  const learningStats = getShortPhraseLearningStats();
+  const scoredCandidates = [];
+  let bestMatch = null;
+
+  if (!normalizedInput || !inputTokens.length) {
+    return {
+      originalText: inputText,
+      lightlyCorrectedText: inputText,
+      personalizedCorrectedText: inputText,
+      correctedText: inputText,
+      confidence: 0,
+      inputType: "short_phrase",
+      engineUsed: "phrase engine",
+      learningSources: [],
+      topCandidates: [],
+      match: null
+    };
+  }
+
+  for (const candidate of candidates) {
+    const stats = learningStats.get(candidate.normalizedText) || null;
+    const rawScore = getMatchScore(normalizedTextForMatching, candidate.normalizedText);
+    const positionScore = getPositionTokenScore(inputTokens, candidate.tokens);
+    const overlapScore = getTokenOverlapScore(inputTokens, candidate.tokens);
+    const lengthPenalty = Math.abs(inputTokens.length - candidate.tokenCount) * 0.06;
+    const reviewBoost = Math.min(
+      ((stats?.reviewCorrectCount || 0) + (stats?.correctionMemoryCount || 0)) *
+        SHORT_PHRASE_REVIEW_BOOST_PER_COUNT,
+      SHORT_PHRASE_MAX_REVIEW_BOOST
+    );
+    const repeatBoost =
+      (stats?.repeatedCorrectCount || 0) >= SHORT_PHRASE_REPEAT_THRESHOLD ? 0.06 : 0;
+    const priorityBoost = Math.min(candidate.priority || 1, 5) * 0.018;
+    const exactBoost = normalizedTextForMatching === candidate.normalizedText ? 0.18 : 0;
+    const confidence = Math.max(
+      0,
+      Math.min(
+        rawScore * 0.68 +
+          positionScore * 0.17 +
+          overlapScore * 0.09 +
+          priorityBoost +
+          reviewBoost +
+          repeatBoost +
+          exactBoost -
+          lengthPenalty,
+        1
+      )
+    );
+    const learningSources = getLearningSourcesForPhrase(candidate, stats, hybridCorrection);
+
+    scoredCandidates.push({
+      id: candidate.id,
+      sourceId: candidate.sourceId || candidate.id,
+      text: candidate.text,
+      score: confidence,
+      fullSentenceScore: rawScore,
+      keywordMatchCount: getKeywordMatch(inputTokens, candidate.tokens).count,
+      keywordMatchWords: getKeywordMatch(inputTokens, candidate.tokens).words,
+      keywordRatio: overlapScore,
+      learningSources
+    });
+
+    if (!bestMatch || confidence > bestMatch.confidence) {
+      bestMatch = {
+        candidate,
+        confidence,
+        rawScore,
+        stats,
+        learningSources
+      };
+    }
+  }
+
+  const topCandidates = scoredCandidates
+    .slice()
+    .sort((left, right) => right.score - left.score)
+    .slice(0, 5);
+  const personalizedText = hybridCorrection.correctedPhraseOutput || inputText;
+  const accepted = bestMatch && bestMatch.confidence >= SHORT_PHRASE_ACCEPT_CONFIDENCE;
+  const correctedText = accepted ? bestMatch.candidate.text : personalizedText;
+
+  return {
+    originalText: inputText,
+    lightlyCorrectedText: personalizedText,
+    personalizedCorrectedText: personalizedText,
+    phraseCorrectionLayer: hybridCorrection.phraseCorrection,
+    tokenCorrectionLayer: hybridCorrection.tokenCorrection,
+    correctionLayer: hybridCorrection.tokenCorrection,
+    hybridCorrection,
+    correctedText,
+    confidence: accepted ? bestMatch.confidence : 0,
+    inputType: "short_phrase",
+    engineUsed: "phrase engine",
+    learningSources: accepted ? bestMatch.learningSources : ["phrase dataset"],
+    appliedPhraseCorrections: hybridCorrection.appliedPhraseCorrections,
+    suggestedPhraseCorrections: hybridCorrection.suggestedPhraseCorrections,
+    appliedPersonalCorrections: hybridCorrection.appliedTokenCorrections,
+    suggestedPersonalCorrections: hybridCorrection.suggestedTokenCorrections,
+    keywordMatchCount: topCandidates[0]?.keywordMatchCount || 0,
+    keywordMatchWords: topCandidates[0]?.keywordMatchWords || [],
+    topCandidates,
+    skippedSentenceMatching: true,
+    match: accepted
+      ? {
+          id: bestMatch.candidate.id,
+          sourceId: bestMatch.candidate.sourceId || bestMatch.candidate.id,
+          rawScore: bestMatch.rawScore,
+          secondBestScore: topCandidates[1]?.score || 0,
+          keywordMatchCount: topCandidates[0]?.keywordMatchCount || 0,
+          keywordMatchWords: topCandidates[0]?.keywordMatchWords || [],
+          topCandidates
+        }
+      : null
+  };
 }
 
 function upsertCorrectionRule(wrongValue, correctValue, options = {}) {
@@ -1641,6 +1950,66 @@ function getTokenOverlapScore(inputTokens, candidateTokens) {
   return exactMatches / Math.max(inputTokens.length, candidateTokens.length);
 }
 
+function getLongestContiguousMatchLength(inputTokens, candidateTokens) {
+  let longest = 0;
+
+  for (let inputIndex = 0; inputIndex < inputTokens.length; inputIndex += 1) {
+    for (let candidateIndex = 0; candidateIndex < candidateTokens.length; candidateIndex += 1) {
+      let length = 0;
+
+      while (
+        inputTokens[inputIndex + length] &&
+        candidateTokens[candidateIndex + length] &&
+        inputTokens[inputIndex + length] === candidateTokens[candidateIndex + length]
+      ) {
+        length += 1;
+      }
+
+      longest = Math.max(longest, length);
+    }
+  }
+
+  return longest;
+}
+
+function getOrderedTokenScore(inputTokens, candidateTokens) {
+  if (!inputTokens.length || !candidateTokens.length) {
+    return 0;
+  }
+
+  let inputIndex = 0;
+  let orderedMatches = 0;
+
+  for (const candidateToken of candidateTokens) {
+    while (inputIndex < inputTokens.length && inputTokens[inputIndex] !== candidateToken) {
+      inputIndex += 1;
+    }
+
+    if (inputIndex >= inputTokens.length) {
+      break;
+    }
+
+    orderedMatches += 1;
+    inputIndex += 1;
+  }
+
+  return orderedMatches / Math.max(Math.min(inputTokens.length, candidateTokens.length), 1);
+}
+
+function getContextScore(inputTokens, candidateTokens) {
+  if (!inputTokens.length || !candidateTokens.length) {
+    return 0;
+  }
+
+  const contiguousScore =
+    getLongestContiguousMatchLength(inputTokens, candidateTokens) /
+    Math.max(Math.min(inputTokens.length, candidateTokens.length), 1);
+  const orderedScore = getOrderedTokenScore(inputTokens, candidateTokens);
+  const positionScore = getPositionTokenScore(inputTokens, candidateTokens);
+
+  return Math.min(contiguousScore * 0.45 + orderedScore * 0.35 + positionScore * 0.2, 1);
+}
+
 function getUniqueTokens(normalizedText) {
   return Array.from(new Set(normalizedText.split(" ").filter(Boolean)));
 }
@@ -1780,6 +2149,10 @@ function normalizeSentenceListLegacy(sentences) {
 }
 
 function findBestMatch(inputText, sentences, options = {}) {
+  if (!options.forceSentenceEngine && detectInputType(inputText) === "short_phrase") {
+    return runShortPhraseEngine(inputText, options);
+  }
+
   const inputNormalized = normalizeText(inputText);
   const hybridCorrection = runHybridCorrectionPipeline(inputText, {
     trackCorrectionUsage: Boolean(options.trackCorrectionUsage)
@@ -1811,6 +2184,9 @@ function findBestMatch(inputText, sentences, options = {}) {
       keywordMatchCount: 0,
       keywordMatchWords: [],
       topCandidates: [],
+      inputType: "sentence",
+      engineUsed: "sentence engine",
+      learningSources: hybridCorrection.appliedTokenCorrections.length ? ["correction memory"] : [],
       skippedReason: "input-too-short",
       match: null
     };
@@ -1846,15 +2222,21 @@ function findBestMatch(inputText, sentences, options = {}) {
   for (const candidate of prefilteredCandidates) {
     const entry = candidate.entry;
     const candidateNormalized = candidate.candidateNormalized;
+    const candidateTokens = entry.tokens || candidateNormalized.split(" ").filter(Boolean);
     const rawScore = getMatchScore(normalizedTextForMatching, candidateNormalized);
+    const contextScore = getContextScore(inputTokens, candidateTokens);
     const keywordBoost = Math.min(candidate.keywordMatch.count * 0.035, 0.16);
-    const combinedScore = Math.min(rawScore * 0.86 + candidate.keywordRatio * 0.14 + keywordBoost, 1);
+    const combinedScore = Math.min(
+      rawScore * 0.68 + contextScore * 0.18 + candidate.keywordRatio * 0.14 + keywordBoost,
+      1
+    );
     scoredCandidates.push({
       id: entry.id,
       sourceId: entry.sourceId,
       text: entry.text,
       score: combinedScore,
       fullSentenceScore: rawScore,
+      contextScore,
       keywordMatchCount: candidate.keywordMatch.count,
       keywordMatchWords: candidate.keywordMatch.words,
       keywordRatio: candidate.keywordRatio
@@ -1885,10 +2267,14 @@ function findBestMatch(inputText, sentences, options = {}) {
         correctedText: entry.text,
         rawScore: combinedScore,
         fullSentenceScore: rawScore,
+        contextScore,
         keywordMatchCount: candidate.keywordMatch.count,
         keywordMatchWords: candidate.keywordMatch.words,
         secondBestScore,
-        confidence: rawScore
+        confidence: rawScore,
+        inputType: "sentence",
+        engineUsed: "sentence engine",
+        learningSources: hybridCorrection.appliedTokenCorrections.length ? ["correction memory"] : []
       };
     } else if (combinedScore > secondBestScore) {
       secondBestScore = combinedScore;
@@ -1925,6 +2311,9 @@ function findBestMatch(inputText, sentences, options = {}) {
       keywordMatchCount: bestMatch?.keywordMatchCount || 0,
       keywordMatchWords: bestMatch?.keywordMatchWords || [],
       topCandidates,
+      inputType: "sentence",
+      engineUsed: "sentence engine",
+      learningSources: hybridCorrection.appliedTokenCorrections.length ? ["correction memory"] : [],
       match: null
     };
   }
@@ -1939,6 +2328,7 @@ function findBestMatch(inputText, sentences, options = {}) {
     secondBestScore: bestMatch.secondBestScore,
     keywordMatchCount: bestMatch.keywordMatchCount,
     keywordMatchWords: bestMatch.keywordMatchWords,
+    contextScore: bestMatch.contextScore,
     topCandidates
   };
   bestMatch.topCandidates = topCandidates;
@@ -2007,6 +2397,9 @@ function notifyRecognitionResult() {
     suggestedPhraseCorrections: matchedSentence?.suggestedPhraseCorrections || [],
     appliedPersonalCorrections: matchedSentence?.appliedPersonalCorrections || [],
     suggestedPersonalCorrections: matchedSentence?.suggestedPersonalCorrections || [],
+    inputType: matchedSentence?.inputType || "",
+    engineUsed: matchedSentence?.engineUsed || "",
+    learningSources: matchedSentence?.learningSources || [],
     createdAt: new Date().toISOString()
   };
 
@@ -2249,10 +2642,13 @@ function finishLocalRecognition(matchResult) {
     .split(/\s+/)
     .filter(Boolean).length;
   const canUseShortPhrasePlayback =
-    (matchResult.engine === "audio-template" || matchResult.source === "learned-audio") &&
+    (matchResult.engine === "audio-template" ||
+      matchResult.source === "learned-audio" ||
+      matchResult.inputType === "short_phrase") &&
     correctedTokenCount > 0 &&
-    correctedTokenCount <= 5 &&
-    matchResult.confidence >= FAST_AUDIO_ACCEPT_SCORE;
+    correctedTokenCount <= SHORT_PHRASE_MAX_WORDS &&
+    matchResult.confidence >=
+      (matchResult.inputType === "short_phrase" ? SHORT_PHRASE_AUTO_CONFIDENCE : FAST_AUDIO_ACCEPT_SCORE);
   const canUseFreeSpeechPlayback =
     matchResult.source === "local-stt" &&
     matchResult.isFreeSpeech &&
@@ -2298,6 +2694,9 @@ function finishLocalRecognition(matchResult) {
     keywordMatchCount: matchResult.keywordMatchCount,
     keywordMatchWords: matchResult.keywordMatchWords,
     topCandidates: matchResult.topCandidates,
+    inputType: matchResult.inputType || detectInputType(matchResult.transcript || matchResult.correctedText),
+    engineUsed: matchResult.engineUsed || matchResult.engine || "",
+    learningSources: matchResult.learningSources || [],
     match: matchResult.match || null,
     debugText: `${matchResult.topMatches?.length
       ? `Đang so ${matchResult.scoredTemplateCount || matchResult.candidateCount || 0}/${
@@ -2362,10 +2761,18 @@ function buildMatchResultFromTranscript(transcriptionResult) {
   }
 
   const matchStartedAt = performance.now();
-  const match = findBestMatch(transcript, getCandidateEntriesForLocalRecognition(), {
+  const inputType = detectInputType(transcript);
+  const candidateEntries =
+    inputType === "sentence"
+      ? getCandidateSentenceEntriesForLocalRecognition()
+      : getCandidateEntriesForLocalRecognition();
+  const match = findBestMatch(transcript, candidateEntries.length ? candidateEntries : getCandidateEntriesForLocalRecognition(), {
     trackCorrectionUsage: true
   });
-  const canUseSentence = match.confidence >= AUTO_CORRECTION_SCORE;
+  const canUseShortPhrase =
+    match.inputType === "short_phrase" && match.confidence >= SHORT_PHRASE_AUTO_CONFIDENCE;
+  const canUseSentence =
+    match.inputType === "sentence" && match.confidence >= AUTO_CORRECTION_SCORE;
   const personalizedText = match.lightlyCorrectedText || transcript;
   const transcriptIsLongEnough = isLongEnoughForSentenceGuess(normalizeVietnameseText(personalizedText));
   const canUseFreeSpeech =
@@ -2373,6 +2780,8 @@ function buildMatchResultFromTranscript(transcriptionResult) {
     transcriptIsLongEnough &&
     (!match.match || match.confidence < AUTO_CORRECTION_SCORE);
   const correctedText = canUseSentence
+    ? match.correctedText
+    : canUseShortPhrase
     ? match.correctedText
     : personalizedText;
   const confidence = canUseFreeSpeech
@@ -2383,10 +2792,10 @@ function buildMatchResultFromTranscript(transcriptionResult) {
     originalAudioAvailable: true,
     correctedText,
     confidence,
-    isConfirmed: canUseSentence || canUseFreeSpeech,
+    isConfirmed: canUseSentence || canUseShortPhrase || canUseFreeSpeech,
     isFreeSpeech: canUseFreeSpeech,
     templateCount: 0,
-    candidateCount: getCandidateEntriesForLocalRecognition().length,
+    candidateCount: candidateEntries.length,
     topMatches: [],
     match: match.match
       ? {
@@ -2415,6 +2824,9 @@ function buildMatchResultFromTranscript(transcriptionResult) {
     keywordMatchCount: match.keywordMatchCount || match.match?.keywordMatchCount || 0,
     keywordMatchWords: match.keywordMatchWords || match.match?.keywordMatchWords || [],
     topCandidates: match.topCandidates || match.match?.topCandidates || [],
+    inputType: match.inputType || inputType,
+    engineUsed: match.engineUsed || (inputType === "short_phrase" ? "phrase engine" : "sentence engine"),
+    learningSources: match.learningSources || [],
     engine: transcriptionResult.engine || "local-stt",
     model: transcriptionResult.model || "",
     timing: {
@@ -2917,8 +3329,13 @@ function createRecognition() {
       renderTranscript(recognizedTranscript, "final");
       emitRecognitionPreview(recognizedTranscript, "final");
       matchedSentence = findClosestSampleSentence(recognizedTranscript);
+      const canUseMatchedSentence =
+        matchedSentence &&
+        (matchedSentence.inputType === "short_phrase"
+          ? matchedSentence.confidence >= SHORT_PHRASE_AUTO_CONFIDENCE
+          : matchedSentence.confidence >= AUTO_CORRECTION_SCORE);
       finalTranscript =
-        matchedSentence && matchedSentence.confidence >= AUTO_CORRECTION_SCORE
+        canUseMatchedSentence
           ? matchedSentence.correctedText
           : recognizedTranscript;
       renderMatchedSentence(
@@ -3108,6 +3525,8 @@ window.voiceCoachControls = {
   stopPractice: stopPracticeSession,
   startPractice: startListening,
   findBestMatch,
+  detectInputType,
+  runShortPhraseEngine,
   applyPhraseCorrections,
   getLastRecognitionResult: () => lastRecognitionResult,
   scoreSentenceMatch: getSentenceMatchScore,
