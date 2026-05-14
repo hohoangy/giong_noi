@@ -7,7 +7,13 @@ const LEARNED_VOICE_DB_VERSION = 1;
 const LEARNED_VOICE_STORE = "samples";
 const MAX_LEARNED_VOICE_SAMPLES = 200;
 const VOICE_FEATURE_SIZE = 64;
-const DTW_CANDIDATE_LIMIT = 10;
+const DTW_CANDIDATE_LIMIT = 24;
+const DTW_CONFIRMED_CANDIDATE_LIMIT = 24;
+const CONFIRMED_LEARNED_TAKES = new Set(["review-correct", "review-confirmed"]);
+const CONFIRMED_LEARNED_MIN_SCORE = 0.68;
+const CONFIRMED_LEARNED_BOOST_FLOOR = 0.91;
+const CONFIRMED_LEARNED_BOOST_MAX = 0.98;
+const CONFIRMED_LEARNED_EVIDENCE_TARGET = 4;
 const SPECTRAL_SAMPLE_RATE = 16000;
 const SPECTRAL_FRAME_SIZE = 400;
 const SPECTRAL_HOP_SIZE = 160;
@@ -326,16 +332,58 @@ function scoreTemplateCandidates(inputFeatures, candidateTemplates) {
     }))
     .sort((left, right) => right.fastScore - left.fastScore);
 
-  const dtwCandidates = fastRankedTemplates.slice(
-    0,
-    Math.min(DTW_CANDIDATE_LIMIT, fastRankedTemplates.length)
+  const dtwCandidatesByKey = new Map();
+  const addDtwCandidates = (items, limit) => {
+    for (const item of items.slice(0, Math.min(limit, items.length))) {
+      const key = `${item.template.sourceSentenceId || item.template.sentenceId}:${item.template.fileName}:${item.template.createdAt || ""}`;
+      dtwCandidatesByKey.set(key, item);
+    }
+  };
+
+  addDtwCandidates(fastRankedTemplates, DTW_CANDIDATE_LIMIT);
+  addDtwCandidates(
+    fastRankedTemplates.filter((item) => isConfirmedLearnedTemplate(item.template)),
+    DTW_CONFIRMED_CANDIDATE_LIMIT
   );
+
+  const dtwCandidates = [...dtwCandidatesByKey.values()];
 
   return dtwCandidates.map((item) => ({
     template: item.template,
     score: compareVoiceFeatures(inputFeatures, item.template.features),
     fastScore: item.fastScore
   }));
+}
+
+function isConfirmedLearnedTemplate(template) {
+  return Boolean(template?.confirmed || CONFIRMED_LEARNED_TAKES.has(template?.take));
+}
+
+function getConfirmedLearnedConfidence(score, secondBestScore, template, evidence = {}) {
+  const margin = Math.max(score - secondBestScore, 0);
+  const baseConfidence = Math.min(score + margin * 0.25, 1);
+
+  if (!isConfirmedLearnedTemplate(template) || score < CONFIRMED_LEARNED_MIN_SCORE) {
+    return baseConfidence;
+  }
+
+  const confirmedTakeCount = Math.max(1, Number(evidence.confirmedTakeCount || 1));
+  const confirmedEvidenceScore = Math.min(
+    confirmedTakeCount / CONFIRMED_LEARNED_EVIDENCE_TARGET,
+    1
+  );
+  const confirmedAverageScore = Number(evidence.confirmedAverageScore || score);
+  const evidenceBoost = Math.min((score - CONFIRMED_LEARNED_MIN_SCORE) * 0.35, 0.07);
+  const marginBoost = Math.min(margin * 0.12, 0.03);
+  const countBoost = confirmedEvidenceScore * 0.035;
+  const averageBoost = Math.max(confirmedAverageScore - CONFIRMED_LEARNED_MIN_SCORE, 0) * 0.08;
+  return Math.min(
+    Math.max(
+      baseConfidence,
+      CONFIRMED_LEARNED_BOOST_FLOOR + evidenceBoost + marginBoost + countBoost + averageBoost
+    ),
+    CONFIRMED_LEARNED_BOOST_MAX
+  );
 }
 
 function runIndexedDbRequest(request) {
@@ -497,6 +545,7 @@ async function saveLearnedVoiceSample(blob, speakerId, metadata = {}) {
     heardText: String(metadata.heardText || "").trim(),
     fileName: serverSample?.file_name || metadata.fileName || `learned_${Date.now()}.webm`,
     take: serverSample?.take || metadata.take || "learned",
+    confirmed: CONFIRMED_LEARNED_TAKES.has(serverSample?.take || metadata.take),
     mimeType: blob.type || "audio/webm",
     audioBlob: blob,
     features: await extractVoiceFeatures(blob),
@@ -541,6 +590,7 @@ async function loadServerLearnedVoiceTemplates(speakerId) {
           text: sample.corrected_text || "",
           heardText: sample.heard_text || "",
           take: sample.take || "learned",
+          confirmed: CONFIRMED_LEARNED_TAKES.has(sample.take || "learned"),
           fileName: sample.file_name || sample.id,
           features: await extractVoiceFeatures(blob),
           learned: true,
@@ -574,6 +624,7 @@ async function loadLearnedVoiceTemplates(speakerId) {
         text: sample.text,
         heardText: sample.heardText,
         take: sample.take,
+        confirmed: Boolean(sample.confirmed) || CONFIRMED_LEARNED_TAKES.has(sample.take),
         fileName: sample.fileName,
         features: sample.features,
         learned: true,
@@ -668,12 +719,30 @@ function getSentenceLevelMatches(scoredTemplates, options = {}) {
     const topScores = sortedMatches.slice(0, 3).map((item) => item.score);
     const averageTopScore =
       topScores.reduce((sum, score) => sum + score, 0) / Math.max(topScores.length, 1);
+    const confirmedMatches = sentenceMatches
+      .filter((item) => isConfirmedLearnedTemplate(item.template))
+      .sort((left, right) => right.score - left.score);
+    const confirmedTopScores = confirmedMatches.slice(0, 4).map((item) => item.score);
+    const confirmedAverageScore =
+      confirmedTopScores.reduce((sum, score) => sum + score, 0) /
+      Math.max(confirmedTopScores.length, 1);
+    const confirmedEvidenceScore = Math.min(
+      confirmedMatches.length / CONFIRMED_LEARNED_EVIDENCE_TARGET,
+      1
+    );
+    const confirmedScore =
+      confirmedMatches.length && confirmedAverageScore >= CONFIRMED_LEARNED_MIN_SCORE
+        ? confirmedAverageScore * 0.86 + confirmedEvidenceScore * 0.14
+        : 0;
+    const blendedScore = bestMatch.score * 0.72 + averageTopScore * 0.28;
 
     return {
       template: bestMatch.template,
-      score: bestMatch.score * 0.72 + averageTopScore * 0.28,
+      score: confirmedScore ? Math.max(blendedScore, confirmedScore) : blendedScore,
       bestTakeScore: bestMatch.score,
-      takeCount: sentenceMatches.length
+      takeCount: sentenceMatches.length,
+      confirmedTakeCount: confirmedMatches.length,
+      confirmedAverageScore
     };
   });
 }
@@ -857,7 +926,12 @@ async function matchVoiceToTemplates(blob, speakerId, options = {}) {
   return {
     originalAudioAvailable: true,
     correctedText: bestScoredSentence.template.text,
-    confidence: Math.min(bestScoredSentence.score + margin * 0.25, 1),
+    confidence: getConfirmedLearnedConfidence(
+      bestScoredSentence.score,
+      secondBestScore,
+      bestScoredSentence.template,
+      bestScoredSentence
+    ),
     templateCount: templates.length,
     candidateCount: candidateTemplates.length,
     scoredTemplateCount: scoredTemplates.length,
@@ -874,6 +948,8 @@ async function matchVoiceToTemplates(blob, speakerId, options = {}) {
       rawConfidence: bestScoredSentence.score,
       bestTakeScore: bestScoredSentence.bestTakeScore,
       takeCount: bestScoredSentence.takeCount,
+      confirmedTakeCount: bestScoredSentence.confirmedTakeCount,
+      confirmedAverageScore: bestScoredSentence.confirmedAverageScore,
       secondBestScore
     }
   };
@@ -958,7 +1034,12 @@ async function matchLearnedVoiceSamples(blob, speakerId, options = {}) {
   return {
     originalAudioAvailable: true,
     correctedText: bestScoredSentence.template.text,
-    confidence: Math.min(bestScoredSentence.score + margin * 0.25, 1),
+    confidence: getConfirmedLearnedConfidence(
+      bestScoredSentence.score,
+      secondBestScore,
+      bestScoredSentence.template,
+      bestScoredSentence
+    ),
     templateCount: templates.length,
     candidateCount: candidateTemplates.length,
     scoredTemplateCount: scoredTemplates.length,
@@ -974,8 +1055,11 @@ async function matchLearnedVoiceSamples(blob, speakerId, options = {}) {
       rawConfidence: bestScoredSentence.score,
       bestTakeScore: bestScoredSentence.bestTakeScore,
       takeCount: bestScoredSentence.takeCount,
+      confirmedTakeCount: bestScoredSentence.confirmedTakeCount,
+      confirmedAverageScore: bestScoredSentence.confirmedAverageScore,
       secondBestScore,
-      learned: true
+      learned: true,
+      confirmed: isConfirmedLearnedTemplate(bestScoredSentence.template)
     },
     source: "learned-audio"
   };
