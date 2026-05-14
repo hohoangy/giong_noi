@@ -381,6 +381,34 @@ button:disabled {
   line-height: 1.6;
 }
 
+.uncertain-confirm-panel {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(15, 118, 110, 0.06);
+  border: 1px solid rgba(15, 118, 110, 0.14);
+}
+
+.uncertain-confirm-panel[hidden] {
+  display: none;
+}
+
+.uncertain-option-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.uncertain-option-row button {
+  max-width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
 .record-target-card {
   grid-column: 1;
   margin-top: 0;

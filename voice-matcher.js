@@ -894,11 +894,17 @@ function filterTemplatesByExpectedSentence(templates, options = {}) {
   }
 
   if (allowedSentenceIds.size) {
-    return templates.filter(
+    const filteredTemplates = templates.filter(
       (template) =>
         allowedSentenceIds.has(template.sentenceId) ||
         allowedSentenceIds.has(template.sourceSentenceId)
     );
+
+    if (!filteredTemplates.length && options.allowOpenLearned) {
+      return templates;
+    }
+
+    return filteredTemplates;
   }
 
   return templates;

@@ -54,6 +54,7 @@ const STATUS_MESSAGES = {
 };
 const MIN_CORRECTION_SCORE = 0.45;
 const AUTO_CORRECTION_SCORE = 0.7;
+const ASK_CONFIRMATION_SCORE = 0.82;
 const CORRECTION_AUTO_CONFIDENCE = 0.58;
 const CORRECTION_SUGGEST_CONFIDENCE = 0.42;
 const MAX_CORRECTION_NGRAM = 3;
@@ -65,6 +66,7 @@ const LEARNED_AUDIO_CORRECTION_SCORE = 0.68;
 const VOICE_TEMPLATE_CORRECTION_SCORE = 0.68;
 const FAST_AUDIO_ACCEPT_SCORE = 0.74;
 const FAST_AUDIO_WAIT_MS = 900;
+const FREE_SPEECH_STT_SCORE = 0.72;
 const SHORT_TRANSCRIPT_AUDIO_CORRECTION_SCORE = 0.88;
 const MIN_MATCH_WORD_COUNT = 4;
 const MIN_MATCH_TEXT_LENGTH = 12;
@@ -420,6 +422,43 @@ function createLearningReviewPanel() {
   controls.className = "recorder-control-row";
   controls.style.gap = "8px";
 
+  const confirmBox = document.createElement("div");
+  confirmBox.className = "uncertain-confirm-panel";
+  confirmBox.hidden = true;
+
+  const confirmPrompt = document.createElement("p");
+  confirmPrompt.className = "meta-text";
+
+  const confirmOptions = document.createElement("div");
+  confirmOptions.className = "uncertain-option-row";
+
+  const confirmInputRow = document.createElement("div");
+  confirmInputRow.className = "recorder-control-row";
+  confirmInputRow.style.gap = "8px";
+
+  const confirmInput = document.createElement("input");
+  confirmInput.className = "field-input";
+  confirmInput.type = "text";
+  confirmInput.placeholder = "Hoặc nhập câu đúng";
+  confirmInput.autocomplete = "off";
+
+  const confirmTypedButton = document.createElement("button");
+  confirmTypedButton.className = "primary-button";
+  confirmTypedButton.type = "button";
+  confirmTypedButton.textContent = "Xác nhận";
+
+  confirmTypedButton.addEventListener("click", () => {
+    handleUncertainConfirmation(confirmInput.value);
+  });
+  confirmInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      handleUncertainConfirmation(confirmInput.value);
+    }
+  });
+
+  confirmInputRow.append(confirmInput, confirmTypedButton);
+  confirmBox.append(confirmPrompt, confirmOptions, confirmInputRow);
+
   const correctButton = document.createElement("button");
   correctButton.className = "primary-button";
   correctButton.type = "button";
@@ -463,12 +502,16 @@ function createLearningReviewPanel() {
   });
 
   controls.append(correctButton, wrongButton, correctionInput, saveWrongButton);
-  panel.append(status, controls);
+  panel.append(confirmBox, status, controls);
   guessMeta.insertAdjacentElement("afterend", panel);
 
   reviewPanelElements = {
     panel,
     status,
+    confirmBox,
+    confirmPrompt,
+    confirmOptions,
+    confirmInput,
     correctButton,
     wrongButton,
     correctionInput,
@@ -481,6 +524,7 @@ function renderLearningReviewPanel(message = "") {
     createLearningReviewPanel();
   }
 
+  renderUncertainConfirmationPanel();
   const heardText = getReviewHeardText();
   const correctedText = getReviewCorrectedText();
   const hasReviewTarget = Boolean(heardText || correctedText);
@@ -490,6 +534,114 @@ function renderLearningReviewPanel(message = "") {
   reviewPanelElements.status.textContent =
     message ||
     `Review status: ${hasReviewTarget ? "chờ đánh dấu đúng/sai" : "chưa có kết quả để review"}.`;
+}
+
+function shouldAskForConfirmation() {
+  return Boolean(
+    matchedSentence &&
+      finalTranscript &&
+      finalTranscript !== matchedSentence.correctedText &&
+      matchedSentence.confidence > 0 &&
+      matchedSentence.confidence < ASK_CONFIRMATION_SCORE
+  );
+}
+
+function getUncertainConfirmationOptions() {
+  const options = [];
+  const pushOption = (text, source) => {
+    const cleanText = String(text || "").trim();
+    const normalizedText = normalizeText(cleanText);
+
+    if (!cleanText || options.some((item) => normalizeText(item.text) === normalizedText)) {
+      return;
+    }
+
+    options.push({ text: cleanText, source });
+  };
+
+  pushOption(matchedSentence?.correctedText, "guess");
+  pushOption(matchedSentence?.personalizedCorrectedText, "personalized");
+  pushOption(recognizedTranscript, "raw");
+
+  for (const candidate of matchedSentence?.topCandidates || []) {
+    pushOption(candidate.text, candidate.sourceId || candidate.id || "candidate");
+  }
+
+  return options.slice(0, 4);
+}
+
+function renderUncertainConfirmationPanel() {
+  if (!reviewPanelElements?.confirmBox) {
+    return;
+  }
+
+  const shouldAsk = shouldAskForConfirmation();
+  reviewPanelElements.confirmBox.hidden = !shouldAsk;
+  reviewPanelElements.confirmOptions.replaceChildren();
+
+  if (!shouldAsk) {
+    reviewPanelElements.confirmInput.value = "";
+    return;
+  }
+
+  const options = getUncertainConfirmationOptions();
+  reviewPanelElements.confirmPrompt.textContent =
+    "App chưa đủ chắc để tự nói. Chọn câu đúng hoặc nhập lại để app học và phát.";
+
+  for (const option of options) {
+    const button = document.createElement("button");
+    button.className = option.source === "guess" ? "primary-button" : "secondary-button";
+    button.type = "button";
+    button.textContent = option.text;
+    button.title = option.source;
+    button.addEventListener("click", () => {
+      handleUncertainConfirmation(option.text);
+    });
+    reviewPanelElements.confirmOptions.append(button);
+  }
+
+  reviewPanelElements.confirmInput.value =
+    matchedSentence?.personalizedCorrectedText || recognizedTranscript || "";
+}
+
+async function handleUncertainConfirmation(textValue) {
+  const confirmedText = String(textValue || "").trim();
+
+  if (!confirmedText) {
+    renderLearningReviewPanel("Review status: cần chọn hoặc nhập câu đúng.");
+    return;
+  }
+
+  const heardText = getReviewHeardText();
+  finalTranscript = confirmedText;
+  matchedSentence = {
+    ...(matchedSentence || {}),
+    correctedText: confirmedText,
+    personalizedCorrectedText: confirmedText,
+    lightlyCorrectedText: confirmedText,
+    confidence: Math.max(matchedSentence?.confidence || 0, ASK_CONFIRMATION_SCORE),
+    confirmedByUser: true
+  };
+  renderTranscript(recognizedTranscript || confirmedText, "final");
+  renderMatchedSentence(matchedSentence, true);
+  notifyRecognitionResult();
+
+  if (heardText && normalizeText(heardText) !== normalizeText(confirmedText)) {
+    learnFromReview(heardText, confirmedText);
+  }
+
+  try {
+    await saveLastRecognitionAudioSample(heardText || confirmedText, confirmedText, "review-confirmed");
+  } catch (error) {
+    console.warn("Unable to save confirmed uncertain sample:", error.message);
+  }
+
+  if (hasSpeechPlayback()) {
+    setAppState(UI_STATES.PROCESSING, "Đã xác nhận câu đúng, app sẽ phát lại sau 0.5 giây");
+    scheduleAutoReplay();
+  } else {
+    setAppState(UI_STATES.READY, "Đã xác nhận câu đúng.");
+  }
 }
 
 function isEditableElement(element) {
@@ -613,7 +765,7 @@ async function resetPersonalLearningFromUrl() {
   setAppState(UI_STATES.READY, "Đã xóa sạch dữ liệu học cá nhân. Bạn có thể bắt đầu học lại.");
 }
 
-function handleCorrectReview() {
+async function handleCorrectReview() {
   const heardText = getReviewHeardText();
   const correctedText = getReviewCorrectedText() || heardText;
 
@@ -634,10 +786,24 @@ function handleCorrectReview() {
       lastRecognitionResult?.appliedPersonalCorrections ||
       []
   );
-  renderLearningReviewPanel("Review status: đã lưu là đúng.");
+
+  try {
+    const learnedSample = await saveLastRecognitionAudioSample(heardText, correctedText, "review-correct");
+    renderLearningReviewPanel(
+      learnedSample?.serverPath
+        ? "Review status: đã lưu là đúng và thêm audio giọng thật vào server."
+        : learnedSample
+        ? "Review status: đã lưu là đúng và thêm audio giọng thật vào mẫu học tạm."
+        : "Review status: đã lưu là đúng."
+    );
+  } catch (error) {
+    renderLearningReviewPanel(
+      `Review status: đã lưu là đúng, nhưng chưa lưu được audio mẫu (${error.message}).`
+    );
+  }
 }
 
-async function saveLastRecognitionAudioSample(heardText, correctedText) {
+async function saveLastRecognitionAudioSample(heardText, correctedText, take = "review-wrong") {
   if (!lastLocalRecognitionBlob || !window.voiceTemplateMatcher?.saveLearnedVoiceSample) {
     return null;
   }
@@ -652,8 +818,8 @@ async function saveLastRecognitionAudioSample(heardText, correctedText) {
       correctedText,
       sentenceId: correctedSentence?.sentenceId || "",
       sourceSentenceId: correctedSentence?.sourceSentenceId || "learned-audio",
-      take: "review-wrong",
-      fileName: `review_wrong_${Date.now()}.webm`
+      take,
+      fileName: `${take.replace(/[^a-z0-9_-]/gi, "_")}_${Date.now()}.webm`
     }
   );
 }
@@ -679,7 +845,7 @@ async function handleWrongReview(correctedTextValue) {
   reviewPanelElements.saveWrongButton.hidden = true;
 
   try {
-    const learnedSample = await saveLastRecognitionAudioSample(heardText, correctedText);
+    const learnedSample = await saveLastRecognitionAudioSample(heardText, correctedText, "review-wrong");
     renderLearningReviewPanel(
       learnedSample?.serverPath
         ? "Review status: đã lưu sửa sai và lưu audio mẫu vào server."
@@ -1987,10 +2153,15 @@ function finishLocalRecognition(matchResult) {
     correctedTokenCount > 0 &&
     correctedTokenCount <= 5 &&
     matchResult.confidence >= FAST_AUDIO_ACCEPT_SCORE;
+  const canUseFreeSpeechPlayback =
+    matchResult.source === "local-stt" &&
+    matchResult.isFreeSpeech &&
+    isLongEnoughForSentenceGuess(normalizeVietnameseText(matchResult.correctedText || ""));
   const canUseCorrectionForPlayback =
-    matchResult.confidence >= AUTO_CORRECTION_SCORE &&
-    (isLongEnoughForSentenceGuess(normalizeVietnameseText(matchResult.correctedText || "")) ||
-      canUseShortPhrasePlayback);
+    (matchResult.confidence >= ASK_CONFIRMATION_SCORE &&
+      (isLongEnoughForSentenceGuess(normalizeVietnameseText(matchResult.correctedText || "")) ||
+        canUseShortPhrasePlayback)) ||
+    (canUseFreeSpeechPlayback && matchResult.confidence >= ASK_CONFIRMATION_SCORE);
   recognizedTranscript = matchResult.transcript || matchResult.correctedText;
   finalTranscript = canUseCorrectionForPlayback
     ? matchResult.correctedText
@@ -1998,7 +2169,9 @@ function finishLocalRecognition(matchResult) {
   matchedSentence = {
     rawText: matchResult.transcript || matchResult.correctedText,
     originalText: matchResult.source === "local-stt"
-      ? `${matchResult.engine} nghe: ${matchResult.transcript}`
+      ? matchResult.isFreeSpeech
+        ? `Câu mới từ STT local: ${matchResult.transcript}`
+        : `${matchResult.engine} nghe: ${matchResult.transcript}`
       : matchResult.source === "learned-audio"
       ? `Audio đã sửa trước đó -> ${matchResult.match?.sourceSentenceId || "learned-audio"}`
       : matchResult.match
@@ -2032,7 +2205,9 @@ function finishLocalRecognition(matchResult) {
           .map((item) => `${item.sourceSentenceId || item.sentenceId} ${item.percent}%`)
           .join(", ")}.`
       : matchResult.source === "local-stt"
-        ? `STT local: ${matchResult.engine}${matchResult.model ? ` (${matchResult.model})` : ""}.`
+        ? `STT local: ${matchResult.engine}${matchResult.model ? ` (${matchResult.model})` : ""}.${
+            matchResult.isFreeSpeech ? " Câu mới ngoài bộ mẫu, dùng transcript đã sửa cá nhân." : ""
+          }`
       : matchResult.source === "learned-audio"
         ? `Mẫu học từ các lần đánh dấu sai: ${matchResult.templateCount || 0} mẫu.`
       : ""}${formatRecognitionTiming(matchResult.timing)}`
@@ -2090,15 +2265,25 @@ function buildMatchResultFromTranscript(transcriptionResult) {
     trackCorrectionUsage: true
   });
   const canUseSentence = match.confidence >= AUTO_CORRECTION_SCORE;
+  const personalizedText = match.lightlyCorrectedText || transcript;
+  const transcriptIsLongEnough = isLongEnoughForSentenceGuess(normalizeVietnameseText(personalizedText));
+  const canUseFreeSpeech =
+    !canUseSentence &&
+    transcriptIsLongEnough &&
+    (!match.match || match.confidence < AUTO_CORRECTION_SCORE);
   const correctedText = canUseSentence
     ? match.correctedText
-    : match.lightlyCorrectedText || transcript;
+    : personalizedText;
+  const confidence = canUseFreeSpeech
+    ? Math.max(match.confidence || 0, FREE_SPEECH_STT_SCORE)
+    : match.confidence || 0;
 
   return {
     originalAudioAvailable: true,
     correctedText,
-    confidence: match.confidence || 0,
-    isConfirmed: canUseSentence,
+    confidence,
+    isConfirmed: canUseSentence || canUseFreeSpeech,
+    isFreeSpeech: canUseFreeSpeech,
     templateCount: 0,
     candidateCount: getCandidateEntriesForLocalRecognition().length,
     topMatches: [],
@@ -2117,7 +2302,7 @@ function buildMatchResultFromTranscript(transcriptionResult) {
       : null,
     source: "local-stt",
     transcript,
-    personalizedCorrectedText: match.lightlyCorrectedText || transcript,
+    personalizedCorrectedText: personalizedText,
     phraseCorrectionLayer: match.phraseCorrectionLayer || match.hybridCorrection?.phraseCorrection || null,
     tokenCorrectionLayer: match.tokenCorrectionLayer || match.hybridCorrection?.tokenCorrection || null,
     hybridCorrection: match.hybridCorrection || null,
@@ -2156,7 +2341,8 @@ async function matchLearnedAudioSample(blob) {
       blob,
       getCurrentSpeakerIdForLocalRecognition(),
       {
-        allowedSentenceIds: getAllowedSentenceIdsForLocalRecognition()
+        allowedSentenceIds: getAllowedSentenceIdsForLocalRecognition(),
+        allowOpenLearned: true
       }
     );
 
