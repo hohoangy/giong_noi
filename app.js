@@ -21,6 +21,11 @@ const LOCAL_RECOGNITION_SILENCE_STOP_MS = 700;
 const LOCAL_RECOGNITION_MIN_RECORDING_MS = 450;
 const LOCAL_RECOGNITION_CHUNK_MS = 200;
 const LOCAL_RECOGNITION_SILENCE_RMS = 0.018;
+const LOCAL_RECOGNITION_SPEECH_RMS = 0.026;
+const LOCAL_RECOGNITION_NOISE_SAMPLE_MS = 450;
+const LOCAL_RECOGNITION_SPEECH_NOISE_RATIO = 2.2;
+const LOCAL_RECOGNITION_MIN_SPEECH_MS = 260;
+const LOCAL_RECOGNITION_MIN_PEAK_RMS = 0.024;
 const SAMPLE_ENTRIES = Array.isArray(window.MONTH2_CORPUS)
   ? window.MONTH2_CORPUS.map((entry, index) => ({
       id: entry.id || `S${String(index + 1).padStart(3, "0")}`,
@@ -131,6 +136,7 @@ let localRecognitionSilenceTimer = null;
 let localRecognitionLevelTimer = null;
 let localRecognitionStartedAt = 0;
 let localRecognitionTiming = null;
+let localRecognitionAudioStats = null;
 let voiceTemplateWarmupPromise = null;
 let learnedCorrections = loadCorrections();
 let correctionRuleCache = null;
@@ -2072,6 +2078,64 @@ function getLocalRecognitionRecordingMs() {
   return localRecognitionStartedAt ? performance.now() - localRecognitionStartedAt : 0;
 }
 
+function resetLocalRecognitionAudioStats() {
+  localRecognitionAudioStats = {
+    frameCount: 0,
+    totalRms: 0,
+    maxRms: 0,
+    noiseFrameCount: 0,
+    noiseTotalRms: 0,
+    speechFrameCount: 0,
+    speechMs: 0,
+    sampleIntervalMs: 100
+  };
+}
+
+function updateLocalRecognitionAudioStats(rms, recordingMs) {
+  if (!localRecognitionAudioStats) {
+    resetLocalRecognitionAudioStats();
+  }
+
+  localRecognitionAudioStats.frameCount += 1;
+  localRecognitionAudioStats.totalRms += rms;
+  localRecognitionAudioStats.maxRms = Math.max(localRecognitionAudioStats.maxRms, rms);
+
+  if (recordingMs <= LOCAL_RECOGNITION_NOISE_SAMPLE_MS) {
+    localRecognitionAudioStats.noiseFrameCount += 1;
+    localRecognitionAudioStats.noiseTotalRms += rms;
+    return;
+  }
+
+  const noiseFloor =
+    localRecognitionAudioStats.noiseFrameCount > 0
+      ? localRecognitionAudioStats.noiseTotalRms / localRecognitionAudioStats.noiseFrameCount
+      : 0;
+  const speechThreshold = Math.max(
+    LOCAL_RECOGNITION_SPEECH_RMS,
+    noiseFloor * LOCAL_RECOGNITION_SPEECH_NOISE_RATIO
+  );
+
+  if (rms >= speechThreshold) {
+    localRecognitionAudioStats.speechFrameCount += 1;
+    localRecognitionAudioStats.speechMs += localRecognitionAudioStats.sampleIntervalMs;
+  }
+}
+
+function hasLocalRecognitionSpeech(blob) {
+  if (!blob?.size) {
+    return false;
+  }
+
+  if (!localRecognitionAudioStats?.frameCount) {
+    return true;
+  }
+
+  return (
+    localRecognitionAudioStats.maxRms >= LOCAL_RECOGNITION_MIN_PEAK_RMS &&
+    localRecognitionAudioStats.speechMs >= LOCAL_RECOGNITION_MIN_SPEECH_MS
+  );
+}
+
 function startLocalSilenceDetection(stream) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
 
@@ -2099,6 +2163,7 @@ function startLocalSilenceDetection(stream) {
 
     const rms = Math.sqrt(sum / samples.length);
     const recordingMs = getLocalRecognitionRecordingMs();
+    updateLocalRecognitionAudioStats(rms, recordingMs);
 
     if (rms >= LOCAL_RECOGNITION_SILENCE_RMS) {
       if (localRecognitionSilenceTimer !== null) {
@@ -2615,6 +2680,7 @@ async function startLocalRecognition() {
   lastRecognitionResult = null;
   localRecognitionTiming = null;
   localRecognitionStartedAt = 0;
+  resetLocalRecognitionAudioStats();
   renderStableTranscript();
   renderMatchedSentence(null);
   emitRecognitionPreview("", "listening");
@@ -2657,13 +2723,18 @@ async function startLocalRecognition() {
       const blob = new Blob(localRecognitionChunks, { type: outputMimeType });
       localRecognitionTiming = {
         recordingMs,
-        bytes: blob.size
+        bytes: blob.size,
+        audioStats: localRecognitionAudioStats
       };
       lastLocalRecognitionBlob = blob;
       localRecognitionRecorder = null;
       releaseLocalRecognitionStream();
 
       try {
+        if (!hasLocalRecognitionSpeech(blob)) {
+          throw new Error("Không nghe thấy giọng nói rõ ràng, app sẽ không đoán câu từ audio im lặng.");
+        }
+
         setAppState(UI_STATES.PROCESSING, "Đang xử lý...");
         const matchResult = await processLocalRecognitionBlob(blob);
         finishLocalRecognition(matchResult);
