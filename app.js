@@ -16,8 +16,8 @@ const LOCAL_RECOGNITION_MIME_CANDIDATES = [
   "audio/ogg;codecs=opus",
   "audio/mp4"
 ];
-const LOCAL_RECOGNITION_AUTO_STOP_MS = 6000;
-const LOCAL_RECOGNITION_SILENCE_STOP_MS = 700;
+const LOCAL_RECOGNITION_AUTO_STOP_MS = 120000;
+const LOCAL_RECOGNITION_SILENCE_STOP_MS = 15000;
 const LOCAL_RECOGNITION_MIN_RECORDING_MS = 450;
 const LOCAL_RECOGNITION_CHUNK_MS = 200;
 const LOCAL_RECOGNITION_SILENCE_RMS = 0.018;
@@ -51,7 +51,7 @@ const UI_STATES = {
 };
 const STATUS_MESSAGES = {
   [UI_STATES.READY]: "Sẵn sàng để bắt đầu",
-  [UI_STATES.LISTENING]: "Đang thu âm local, hãy nói rõ một câu ngắn",
+  [UI_STATES.LISTENING]: "Đang thu âm local, app sẽ tự xử lý sau 15 giây im lặng",
   [UI_STATES.PROCESSING]: "Đang xử lý, sẽ tự phát lại sau 0.5 giây",
   [UI_STATES.SPEAKING]: "Đang phát lại câu vừa nhận diện",
   [UI_STATES.ERROR]: "Đã có lỗi xảy ra",
