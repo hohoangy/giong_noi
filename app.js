@@ -89,7 +89,16 @@ const KEYWORD_PREFILTER_LIMIT = 10;
 const NORMALIZED_SAMPLE_ENTRIES = new WeakMap();
 const SPEECH_CORRECTIONS_STORAGE_KEY = "speech_corrections.json";
 const SPEECH_REVIEWS_STORAGE_KEY = "voicecoach_speech_reviews";
+const SPEECH_CONTEXT_STORAGE_KEY = "voicecoach_context_memory";
+const SPEECH_TRUST_STORAGE_KEY = "voicecoach_sample_trust";
 const RECORDER_STORAGE_KEY = "voiceCoachDatasetRecorder";
+const CONTEXT_MEMORY_MAX_ITEMS = 40;
+const CONTEXT_RECENT_LIMIT = 8;
+const CONTEXT_PHRASE_BOOST_MAX = 0.12;
+const TRUST_CORRECT_BOOST = 0.08;
+const TRUST_WRONG_PENALTY = 0.14;
+const TRUST_DEFAULT_SCORE = 0.5;
+const SAFE_MODE_MIN_AUTO_CONFIDENCE = 0.82;
 const DEFAULT_PHRASE_DATASET = [
   "cảm ơn",
   "cảm ơn bạn",
@@ -152,6 +161,174 @@ let phraseDatasetLoadedFromFile = false;
 let phraseDatasetByLength = new Map();
 let phraseDatasetExactMap = new Map();
 let reviewPanelElements = null;
+
+function readLocalJson(key, fallback) {
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch (error) {
+    return fallback;
+  }
+}
+
+function writeLocalJson(key, value) {
+  window.localStorage.setItem(key, JSON.stringify(value, null, 2));
+}
+
+function loadContextMemory() {
+  const parsed = readLocalJson(SPEECH_CONTEXT_STORAGE_KEY, null);
+  if (!parsed || typeof parsed !== "object") {
+    return { recent: [], phrases: {}, topics: {}, updatedAt: "" };
+  }
+
+  return {
+    recent: Array.isArray(parsed.recent) ? parsed.recent.slice(0, CONTEXT_RECENT_LIMIT) : [],
+    phrases: typeof parsed.phrases === "object" && parsed.phrases ? parsed.phrases : {},
+    topics: typeof parsed.topics === "object" && parsed.topics ? parsed.topics : {},
+    updatedAt: parsed.updatedAt || ""
+  };
+}
+
+function saveContextMemory(memory) {
+  const phraseEntries = Object.entries(memory.phrases || {})
+    .sort((left, right) => Number(right[1]?.count || 0) - Number(left[1]?.count || 0))
+    .slice(0, CONTEXT_MEMORY_MAX_ITEMS);
+  const topicEntries = Object.entries(memory.topics || {})
+    .sort((left, right) => Number(right[1]?.count || 0) - Number(left[1]?.count || 0))
+    .slice(0, CONTEXT_MEMORY_MAX_ITEMS);
+
+  writeLocalJson(SPEECH_CONTEXT_STORAGE_KEY, {
+    recent: (memory.recent || []).slice(0, CONTEXT_RECENT_LIMIT),
+    phrases: Object.fromEntries(phraseEntries),
+    topics: Object.fromEntries(topicEntries),
+    updatedAt: new Date().toISOString()
+  });
+}
+
+function updateContextMemory(text, source = "recognition") {
+  const normalized = normalizeText(text);
+  const tokens = tokenizeText(normalized);
+
+  if (!normalized || !tokens.length) {
+    return null;
+  }
+
+  const memory = loadContextMemory();
+  const now = new Date().toISOString();
+  memory.recent = [
+    { text: normalizeDisplayText(text), normalized, source, createdAt: now },
+    ...(memory.recent || []).filter((item) => item.normalized !== normalized)
+  ].slice(0, CONTEXT_RECENT_LIMIT);
+
+  const phraseRecord = memory.phrases[normalized] || { text: normalizeDisplayText(text), count: 0 };
+  phraseRecord.count = Number(phraseRecord.count || 0) + 1;
+  phraseRecord.lastUsed = now;
+  phraseRecord.source = source;
+  memory.phrases[normalized] = phraseRecord;
+
+  for (const token of tokens) {
+    const topicRecord = memory.topics[token] || { token, count: 0 };
+    topicRecord.count = Number(topicRecord.count || 0) + 1;
+    topicRecord.lastUsed = now;
+    memory.topics[token] = topicRecord;
+  }
+
+  saveContextMemory(memory);
+  return memory;
+}
+
+function getContextBoost(candidateText) {
+  const normalized = normalizeText(candidateText);
+  const candidateTokens = tokenizeText(normalized);
+  if (!normalized || !candidateTokens.length) {
+    return { boost: 0, sources: [] };
+  }
+
+  const memory = loadContextMemory();
+  const sources = [];
+  let boost = 0;
+  const phraseRecord = memory.phrases?.[normalized];
+  if (phraseRecord) {
+    boost += Math.min(Number(phraseRecord.count || 1) * 0.018, 0.075);
+    sources.push("frequent phrase");
+  }
+
+  const recentMatch = (memory.recent || []).find((item) => item.normalized === normalized);
+  if (recentMatch) {
+    boost += 0.045;
+    sources.push("recent phrase");
+  }
+
+  let topicHits = 0;
+  for (const token of candidateTokens) {
+    if (memory.topics?.[token]) {
+      topicHits += 1;
+    }
+  }
+
+  if (topicHits) {
+    boost += Math.min((topicHits / candidateTokens.length) * 0.045, 0.045);
+    sources.push("recent topic");
+  }
+
+  return {
+    boost: Math.min(boost, CONTEXT_PHRASE_BOOST_MAX),
+    sources: Array.from(new Set(sources))
+  };
+}
+
+function loadSampleTrustStore() {
+  const parsed = readLocalJson(SPEECH_TRUST_STORAGE_KEY, {});
+  return parsed && typeof parsed === "object" ? parsed : {};
+}
+
+function saveSampleTrustStore(store) {
+  writeLocalJson(SPEECH_TRUST_STORAGE_KEY, store);
+  window.voiceTemplateMatcher?.setSampleTrustStore?.(store);
+}
+
+function getTrustKeyFromMatch(match) {
+  if (!match) {
+    return "";
+  }
+
+  return match.relativePath || match.fileName || match.sourceSentenceId || match.sentenceId || "";
+}
+
+function updateSampleTrustFromReview(isCorrect) {
+  const key = getTrustKeyFromMatch(matchedSentence?.match);
+  if (!key) {
+    return null;
+  }
+
+  const store = loadSampleTrustStore();
+  const existing = store[key] || {
+    audio: key,
+    correctCount: 0,
+    wrongCount: 0,
+    trustScore: TRUST_DEFAULT_SCORE,
+    lastConfirmed: ""
+  };
+
+  if (isCorrect) {
+    existing.correctCount = Number(existing.correctCount || 0) + 1;
+    existing.lastConfirmed = new Date().toISOString();
+  } else {
+    existing.wrongCount = Number(existing.wrongCount || 0) + 1;
+  }
+
+  const evidence = existing.correctCount + existing.wrongCount;
+  const successRate = evidence ? existing.correctCount / evidence : TRUST_DEFAULT_SCORE;
+  const delta = isCorrect ? TRUST_CORRECT_BOOST : -TRUST_WRONG_PENALTY;
+  existing.trustScore = Math.max(
+    0.05,
+    Math.min(0.99, successRate * 0.72 + TRUST_DEFAULT_SCORE * 0.18 + existing.trustScore * 0.1 + delta)
+  );
+  existing.updatedAt = new Date().toISOString();
+  store[key] = existing;
+  saveSampleTrustStore(store);
+  return existing;
+}
 
 function emitRecognitionPreview(transcriptValue, mode = "interim") {
   window.dispatchEvent(
@@ -448,6 +625,15 @@ function createLearningReviewPanel() {
   const status = document.createElement("p");
   status.className = "meta-text";
 
+  const debug = document.createElement("details");
+  debug.className = "pipeline-debug-panel";
+  debug.hidden = !isDebugPipelineEnabled();
+  const debugSummary = document.createElement("summary");
+  debugSummary.textContent = "Debug pipeline";
+  const debugBody = document.createElement("pre");
+  debugBody.className = "pipeline-debug-body";
+  debug.append(debugSummary, debugBody);
+
   const controls = document.createElement("div");
   controls.className = "recorder-control-row";
   controls.style.gap = "8px";
@@ -536,12 +722,14 @@ function createLearningReviewPanel() {
   });
 
   controls.append(correctButton, wrongButton, correctionInput, saveWrongButton);
-  panel.append(confirmBox, status, controls);
+  panel.append(confirmBox, status, debug, controls);
   guessMeta.insertAdjacentElement("afterend", panel);
 
   reviewPanelElements = {
     panel,
     status,
+    debug,
+    debugBody,
     confirmBox,
     confirmPrompt,
     confirmOptions,
@@ -569,6 +757,50 @@ function renderLearningReviewPanel(message = "") {
   reviewPanelElements.status.textContent =
     message ||
     `Review status: ${hasReviewTarget ? "chờ đánh dấu đúng/sai" : "chưa có kết quả để review"}.`;
+  renderPipelineDebugPanel();
+}
+
+function isDebugPipelineEnabled() {
+  return new URL(window.location.href).searchParams.get("debug") === "1";
+}
+
+function renderPipelineDebugPanel() {
+  if (!reviewPanelElements?.debugBody) {
+    return;
+  }
+
+  reviewPanelElements.debug.hidden = !isDebugPipelineEnabled();
+  if (reviewPanelElements.debug.hidden) {
+    reviewPanelElements.debugBody.textContent = "";
+    return;
+  }
+
+  const result = lastRecognitionResult || {};
+  const match = matchedSentence || {};
+  const payload = {
+    rawTranscript: result.recognizedTranscript || recognizedTranscript || "",
+    correctedText: result.correctedTranscript || match.correctedText || "",
+    playbackText: result.playbackTranscript || finalTranscript || "",
+    inputType: result.inputType || match.inputType || "",
+    engineUsed: result.engineUsed || match.engineUsed || "",
+    confidence: result.matchScore ?? match.confidence ?? 0,
+    trust: loadSampleTrustStore()[getTrustKeyFromMatch(match.match)] || null,
+    context: getContextBoost(match.correctedText || result.correctedTranscript || ""),
+    correctionSource: {
+      phrase: result.appliedPhraseCorrections || match.appliedPhraseCorrections || [],
+      token: result.appliedPersonalCorrections || match.appliedPersonalCorrections || [],
+      suggestedPhrase: result.suggestedPhraseCorrections || match.suggestedPhraseCorrections || [],
+      suggestedToken: result.suggestedPersonalCorrections || match.suggestedPersonalCorrections || []
+    },
+    phraseCandidates: (match.topCandidates || []).slice(0, 5),
+    audioCandidates: match.debugText || "",
+    timing: result.timing || match.timing || null,
+    safeMode:
+      !match.correctedText ||
+      Number(match.confidence || result.matchScore || 0) < SAFE_MODE_MIN_AUTO_CONFIDENCE
+  };
+
+  reviewPanelElements.debugBody.textContent = JSON.stringify(payload, null, 2);
 }
 
 function isShortcutInputElement(element) {
@@ -699,6 +931,8 @@ async function handleUncertainConfirmation(textValue) {
   if (heardText && normalizeText(heardText) !== normalizeText(confirmedText)) {
     learnFromReview(heardText, confirmedText);
   }
+  updateContextMemory(confirmedText, "review-confirmed");
+  updateSampleTrustFromReview(true);
 
   try {
     await saveLastRecognitionAudioSample(heardText || confirmedText, confirmedText, "review-confirmed");
@@ -783,7 +1017,10 @@ async function resetAllPersonalLearning(options = {}) {
   correctionRuleCache = null;
   window.localStorage.removeItem(SPEECH_CORRECTIONS_STORAGE_KEY);
   window.localStorage.removeItem(SPEECH_REVIEWS_STORAGE_KEY);
+  window.localStorage.removeItem(SPEECH_CONTEXT_STORAGE_KEY);
+  window.localStorage.removeItem(SPEECH_TRUST_STORAGE_KEY);
   window.localStorage.removeItem(RECORDER_STORAGE_KEY);
+  window.voiceTemplateMatcher?.setSampleTrustStore?.({});
 
   try {
     await window.voiceTemplateMatcher?.resetLearnedVoiceSamples?.();
@@ -829,8 +1066,10 @@ async function handleCorrectReview() {
       lastRecognitionResult?.appliedPersonalCorrections ||
       []
   );
+  const trust = updateSampleTrustFromReview(true);
 
   if (correctedText) {
+    updateContextMemory(correctedText, "review-correct");
     finalTranscript = correctedText;
     if (matchedSentence) {
       matchedSentence = {
@@ -848,10 +1087,10 @@ async function handleCorrectReview() {
     const learnedSample = await saveLastRecognitionAudioSample(heardText, correctedText, "review-correct");
     renderLearningReviewPanel(
       learnedSample?.serverPath
-        ? "Review status: đã lưu là đúng và thêm audio giọng thật vào server."
+        ? `Review status: đã lưu là đúng và thêm audio giọng thật vào server.${trust ? ` Trust ${Math.round(trust.trustScore * 100)}%.` : ""}`
         : learnedSample
-        ? "Review status: đã lưu là đúng và thêm audio giọng thật vào mẫu học tạm."
-        : "Review status: đã lưu là đúng."
+        ? `Review status: đã lưu là đúng và thêm audio giọng thật vào mẫu học tạm.${trust ? ` Trust ${Math.round(trust.trustScore * 100)}%.` : ""}`
+        : `Review status: đã lưu là đúng.${trust ? ` Trust ${Math.round(trust.trustScore * 100)}%.` : ""}`
     );
   } catch (error) {
     renderLearningReviewPanel(
@@ -901,6 +1140,13 @@ async function handleWrongReview(correctedTextValue) {
     isCorrect: false,
     createdAt: new Date().toISOString()
   });
+  updateSampleTrustFromReview(false);
+  updateContextMemory(correctedText, "review-wrong-correction");
+  markAppliedCorrectionsWrong(
+    matchedSentence?.appliedPersonalCorrections ||
+      lastRecognitionResult?.appliedPersonalCorrections ||
+      []
+  );
   learnFromReview(heardText, correctedText);
   reviewPanelElements.correctionInput.hidden = true;
   reviewPanelElements.saveWrongButton.hidden = true;
@@ -1051,6 +1297,7 @@ function normalizeCorrectionRecord(item) {
   const correct = normalizeDisplayText(item?.correct || "");
   const learnedCount = Math.max(1, Number(item?.learnedCount || item?.count || 1));
   const successCount = Math.max(0, Number(item?.successCount || item?.success || 0));
+  const wrongCount = Math.max(0, Number(item?.wrongCount || item?.failureCount || 0));
   const ngramSize = Math.max(1, Math.min(MAX_CORRECTION_NGRAM, Number(item?.ngramSize || tokenizeText(wrong).length || 1)));
 
   return {
@@ -1058,11 +1305,14 @@ function normalizeCorrectionRecord(item) {
     correct,
     learnedCount,
     successCount,
+    wrongCount,
+    successRate: learnedCount ? Math.min(successCount / learnedCount, 1) : 0,
     count: learnedCount,
     usedCount: Math.max(0, Number(item?.usedCount || 0)),
     ngramSize,
     createdAt: item?.createdAt || new Date().toISOString(),
-    updatedAt: item?.updatedAt || item?.createdAt || new Date().toISOString()
+    updatedAt: item?.updatedAt || item?.createdAt || new Date().toISOString(),
+    lastUsed: item?.lastUsed || item?.lastUsedAt || ""
   };
 }
 
@@ -1088,13 +1338,18 @@ function correctionConfidence(rule) {
 
   const learnedCount = Math.max(1, Number(rule.learnedCount || rule.count || 1));
   const successCount = Math.max(0, Number(rule.successCount || rule.success || 0));
+  const wrongCount = Math.max(0, Number(rule.wrongCount || 0));
   const usedCount = Number(rule.usedCount || 0);
-  const successRate = Math.min(successCount / learnedCount, 1);
+  const successRate = Math.min(successCount / Math.max(successCount + wrongCount, learnedCount, 1), 1);
   const evidenceScore = Math.min(learnedCount / 6, 1);
   const useScore = Math.min(usedCount / 12, 1);
   const ngramBonus = Math.min(Number(rule.ngramSize || 1) - 1, 2) * 0.04;
+  const failurePenalty = Math.min(wrongCount * 0.06, 0.24);
 
-  return Math.min(0.34 + evidenceScore * 0.28 + successRate * 0.22 + useScore * 0.08 + ngramBonus, 0.97);
+  return Math.max(
+    0.05,
+    Math.min(0.34 + evidenceScore * 0.28 + successRate * 0.22 + useScore * 0.08 + ngramBonus - failurePenalty, 0.97)
+  );
 }
 
 function expandCorrectionRule(rule) {
@@ -1114,6 +1369,7 @@ function expandCorrectionRule(rule) {
     correctNormalized: correctTokens.map(normalizeText).join(" "),
     learnedCount: rule.learnedCount || rule.count || 1,
     successCount: rule.successCount || 0,
+    wrongCount: rule.wrongCount || 0,
     count: rule.learnedCount || rule.count || 1,
     usedCount: rule.usedCount || 0,
     ngramSize: wrongTokens.length,
@@ -1209,6 +1465,7 @@ function applyPersonalCorrections(inputText, options = {}) {
     if (options.trackUsage && !matchedRule.builtin && matchedRule.sourceRule) {
       matchedRule.sourceRule.usedCount = Number(matchedRule.sourceRule.usedCount || 0) + 1;
       matchedRule.sourceRule.updatedAt = new Date().toISOString();
+      matchedRule.sourceRule.lastUsed = matchedRule.sourceRule.updatedAt;
       usageChanged = true;
     }
 
@@ -1217,6 +1474,7 @@ function applyPersonalCorrections(inputText, options = {}) {
       correct: matchedRule.correct,
       learnedCount: matchedRule.learnedCount || matchedRule.count || 1,
       successCount: matchedRule.successCount || 0,
+      wrongCount: matchedRule.wrongCount || 0,
       usedCount: matchedRule.usedCount || 0,
       confidence,
       ngramSize: matchedRule.ngramSize,
@@ -1598,6 +1856,7 @@ function runShortPhraseEngine(inputText, options = {}) {
       (stats?.repeatedCorrectCount || 0) >= SHORT_PHRASE_REPEAT_THRESHOLD ? 0.06 : 0;
     const priorityBoost = Math.min(candidate.priority || 1, 5) * 0.018;
     const exactBoost = normalizedTextForMatching === candidate.normalizedText ? 0.18 : 0;
+    const context = getContextBoost(candidate.text);
     const confidence = Math.max(
       0,
       Math.min(
@@ -1607,6 +1866,7 @@ function runShortPhraseEngine(inputText, options = {}) {
           priorityBoost +
           reviewBoost +
           repeatBoost +
+          context.boost +
           exactBoost -
           lengthPenalty,
         1
@@ -1623,7 +1883,8 @@ function runShortPhraseEngine(inputText, options = {}) {
       keywordMatchCount: getKeywordMatch(inputTokens, candidate.tokens).count,
       keywordMatchWords: getKeywordMatch(inputTokens, candidate.tokens).words,
       keywordRatio: overlapScore,
-      learningSources
+      learningSources: Array.from(new Set([...learningSources, ...context.sources])),
+      contextBoost: context.boost
     });
 
     if (!bestMatch || confidence > bestMatch.confidence) {
@@ -1632,7 +1893,8 @@ function runShortPhraseEngine(inputText, options = {}) {
         confidence,
         rawScore,
         stats,
-        learningSources
+        learningSources: Array.from(new Set([...learningSources, ...context.sources])),
+        contextBoost: context.boost
       };
     }
   }
@@ -1658,6 +1920,7 @@ function runShortPhraseEngine(inputText, options = {}) {
     inputType: "short_phrase",
     engineUsed: "phrase engine",
     learningSources: accepted ? bestMatch.learningSources : ["phrase dataset"],
+    contextBoost: accepted ? bestMatch.contextBoost : 0,
     appliedPhraseCorrections: hybridCorrection.appliedPhraseCorrections,
     suggestedPhraseCorrections: hybridCorrection.suggestedPhraseCorrections,
     appliedPersonalCorrections: hybridCorrection.appliedTokenCorrections,
@@ -1705,6 +1968,7 @@ function upsertCorrectionRule(wrongValue, correctValue, options = {}) {
       Number(existing.learnedCount || existing.count || 1) + Number(options.learnedCount || 1);
     existing.successCount =
       Number(existing.successCount || 0) + Number(options.successCount || 0);
+    existing.wrongCount = Number(existing.wrongCount || 0) + Number(options.wrongCount || 0);
     existing.count = existing.learnedCount;
     existing.usedCount = Number(existing.usedCount || 0) + Number(options.usedCount || 0);
     existing.ngramSize = Math.max(existing.ngramSize || 1, ngramSize);
@@ -1717,6 +1981,7 @@ function upsertCorrectionRule(wrongValue, correctValue, options = {}) {
     correct,
     learnedCount: Number(options.learnedCount || 1),
     successCount: Number(options.successCount || 0),
+    wrongCount: Number(options.wrongCount || 0),
     count: Number(options.learnedCount || 1),
     usedCount: Number(options.usedCount || 0),
     ngramSize,
@@ -1763,6 +2028,29 @@ function markAppliedCorrectionsSuccessful(appliedRules = []) {
     if (existing) {
       existing.successCount = Number(existing.successCount || 0) + 1;
       existing.count = existing.learnedCount || existing.count || 1;
+      existing.updatedAt = new Date().toISOString();
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    sortAndTrimCorrections();
+    saveCorrections();
+  }
+}
+
+function markAppliedCorrectionsWrong(appliedRules = []) {
+  let changed = false;
+
+  for (const rule of appliedRules) {
+    const wrong = normalizeText(rule.wrong);
+    const correct = normalizeText(rule.correct);
+    const existing = learnedCorrections.find(
+      (item) => normalizeText(item.wrong) === wrong && normalizeText(item.correct) === correct
+    );
+
+    if (existing) {
+      existing.wrongCount = Number(existing.wrongCount || 0) + 1;
       existing.updatedAt = new Date().toISOString();
       changed = true;
     }
@@ -2225,9 +2513,14 @@ function findBestMatch(inputText, sentences, options = {}) {
     const candidateTokens = entry.tokens || candidateNormalized.split(" ").filter(Boolean);
     const rawScore = getMatchScore(normalizedTextForMatching, candidateNormalized);
     const contextScore = getContextScore(inputTokens, candidateTokens);
+    const personalContext = getContextBoost(entry.text);
     const keywordBoost = Math.min(candidate.keywordMatch.count * 0.035, 0.16);
     const combinedScore = Math.min(
-      rawScore * 0.68 + contextScore * 0.18 + candidate.keywordRatio * 0.14 + keywordBoost,
+      rawScore * 0.68 +
+        contextScore * 0.18 +
+        candidate.keywordRatio * 0.14 +
+        keywordBoost +
+        personalContext.boost * 0.65,
       1
     );
     scoredCandidates.push({
@@ -2239,7 +2532,9 @@ function findBestMatch(inputText, sentences, options = {}) {
       contextScore,
       keywordMatchCount: candidate.keywordMatch.count,
       keywordMatchWords: candidate.keywordMatch.words,
-      keywordRatio: candidate.keywordRatio
+      keywordRatio: candidate.keywordRatio,
+      contextBoost: personalContext.boost,
+      learningSources: personalContext.sources
     });
 
     if (!bestMatch || combinedScore > bestMatch.rawScore) {
@@ -2274,7 +2569,11 @@ function findBestMatch(inputText, sentences, options = {}) {
         confidence: rawScore,
         inputType: "sentence",
         engineUsed: "sentence engine",
-        learningSources: hybridCorrection.appliedTokenCorrections.length ? ["correction memory"] : []
+        learningSources: [
+          ...(hybridCorrection.appliedTokenCorrections.length ? ["correction memory"] : []),
+          ...personalContext.sources
+        ],
+        contextBoost: personalContext.boost
       };
     } else if (combinedScore > secondBestScore) {
       secondBestScore = combinedScore;
@@ -2400,6 +2699,9 @@ function notifyRecognitionResult() {
     inputType: matchedSentence?.inputType || "",
     engineUsed: matchedSentence?.engineUsed || "",
     learningSources: matchedSentence?.learningSources || [],
+    trust: loadSampleTrustStore()[getTrustKeyFromMatch(matchedSentence?.match)] || null,
+    context: getContextBoost(matchedSentence?.correctedText || correctedTranscript || ""),
+    timing: matchedSentence?.timing || null,
     createdAt: new Date().toISOString()
   };
 
@@ -2698,6 +3000,7 @@ function finishLocalRecognition(matchResult) {
     engineUsed: matchResult.engineUsed || matchResult.engine || "",
     learningSources: matchResult.learningSources || [],
     match: matchResult.match || null,
+    timing: matchResult.timing || null,
     debugText: `${matchResult.topMatches?.length
       ? `Đang so ${matchResult.scoredTemplateCount || matchResult.candidateCount || 0}/${
           matchResult.candidateCount || 0
@@ -2721,6 +3024,10 @@ function finishLocalRecognition(matchResult) {
   emitRecognitionPreview(recognizedTranscript, "final");
   renderMatchedSentence(matchedSentence, canUseCorrectionForPlayback);
   notifyRecognitionResult();
+
+  if (canUseCorrectionForPlayback) {
+    updateContextMemory(finalTranscript, matchResult.source || matchResult.engine || "recognition");
+  }
 
   if (hasSpeechPlayback() && canUseCorrectionForPlayback) {
     setAppState(UI_STATES.PROCESSING, "Đã nhận diện xong, app sẽ phát lại sau 0.5 giây");
@@ -2849,6 +3156,7 @@ async function matchLearnedAudioSample(blob) {
   }
 
   try {
+    window.voiceTemplateMatcher.setSampleTrustStore?.(loadSampleTrustStore());
     const startedAt = performance.now();
     const matchResult = await window.voiceTemplateMatcher.matchLearnedVoiceSamples(
       blob,
@@ -2882,6 +3190,7 @@ async function matchVoiceTemplateSample(blob) {
   }
 
   try {
+    window.voiceTemplateMatcher.setSampleTrustStore?.(loadSampleTrustStore());
     const startedAt = performance.now();
     const matchResult = await window.voiceTemplateMatcher.matchVoiceToTemplates(
       blob,

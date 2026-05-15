@@ -409,6 +409,31 @@ button:disabled {
   text-align: left;
 }
 
+.pipeline-debug-panel {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(31, 41, 51, 0.05);
+  border: 1px solid rgba(66, 68, 90, 0.08);
+}
+
+.pipeline-debug-panel summary {
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.pipeline-debug-body {
+  max-height: 280px;
+  margin: 10px 0 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #26323f;
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
 .record-target-card {
   grid-column: 1;
   margin-top: 0;

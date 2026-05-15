@@ -21,6 +21,42 @@ const SPECTRAL_BANDS = [
   140, 190, 260, 350, 470, 640, 860, 1160, 1560, 2100, 2830, 3800, 5100
 ];
 const MAX_SPECTRAL_FRAMES = 90;
+let SAMPLE_TRUST_STORE = {};
+
+function setSampleTrustStore(store) {
+  SAMPLE_TRUST_STORE = store && typeof store === "object" ? store : {};
+}
+
+function getTemplateTrustRecord(template) {
+  const keys = [
+    template?.relativePath,
+    template?.serverPath,
+    template?.fileName,
+    template?.sourceSentenceId,
+    template?.sentenceId
+  ].filter(Boolean);
+
+  for (const key of keys) {
+    if (SAMPLE_TRUST_STORE[key]) {
+      return SAMPLE_TRUST_STORE[key];
+    }
+  }
+
+  return null;
+}
+
+function applyTrustToScore(score, template) {
+  const trust = getTemplateTrustRecord(template);
+  if (!trust) {
+    return score;
+  }
+
+  const trustScore = Math.max(0, Math.min(Number(trust.trustScore || 0.5), 1));
+  const evidence = Number(trust.correctCount || 0) + Number(trust.wrongCount || 0);
+  const evidenceWeight = Math.min(evidence / 8, 1);
+  const adjustment = (trustScore - 0.5) * 0.18 * evidenceWeight;
+  return Math.max(0, Math.min(score + adjustment, 1));
+}
 
 function getAudioContext() {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -348,11 +384,16 @@ function scoreTemplateCandidates(inputFeatures, candidateTemplates) {
 
   const dtwCandidates = [...dtwCandidatesByKey.values()];
 
-  return dtwCandidates.map((item) => ({
-    template: item.template,
-    score: compareVoiceFeatures(inputFeatures, item.template.features),
-    fastScore: item.fastScore
-  }));
+  return dtwCandidates.map((item) => {
+    const rawScore = compareVoiceFeatures(inputFeatures, item.template.features);
+    return {
+      template: item.template,
+      score: applyTrustToScore(rawScore, item.template),
+      rawScore,
+      trust: getTemplateTrustRecord(item.template),
+      fastScore: item.fastScore
+    };
+  });
 }
 
 function isConfirmedLearnedTemplate(template) {
@@ -592,6 +633,7 @@ async function loadServerLearnedVoiceTemplates(speakerId) {
           take: sample.take || "learned",
           confirmed: CONFIRMED_LEARNED_TAKES.has(sample.take || "learned"),
           fileName: sample.file_name || sample.id,
+          relativePath: sample.relative_path || "",
           features: await extractVoiceFeatures(blob),
           learned: true,
           serverStored: true,
@@ -626,6 +668,7 @@ async function loadLearnedVoiceTemplates(speakerId) {
         take: sample.take,
         confirmed: Boolean(sample.confirmed) || CONFIRMED_LEARNED_TAKES.has(sample.take),
         fileName: sample.fileName,
+        relativePath: sample.serverPath || "",
         features: sample.features,
         learned: true,
         serverStored: Boolean(sample.serverPath),
@@ -681,6 +724,7 @@ function getTopMatches(scoredTemplates, limit = 5) {
       fileName: item.template.fileName,
       text: item.template.text,
       score: item.score,
+      trustScore: item.trust?.trustScore || null,
       percent: Math.round(item.score * 100)
     }));
 }
@@ -946,6 +990,7 @@ async function matchVoiceToTemplates(blob, speakerId, options = {}) {
       fileName: bestScoredSentence.template.fileName,
       relativePath: bestScoredSentence.template.relativePath,
       rawConfidence: bestScoredSentence.score,
+      trustScore: getTemplateTrustRecord(bestScoredSentence.template)?.trustScore || null,
       bestTakeScore: bestScoredSentence.bestTakeScore,
       takeCount: bestScoredSentence.takeCount,
       confirmedTakeCount: bestScoredSentence.confirmedTakeCount,
@@ -1053,6 +1098,7 @@ async function matchLearnedVoiceSamples(blob, speakerId, options = {}) {
       take: bestScoredSentence.template.take,
       fileName: bestScoredSentence.template.fileName,
       rawConfidence: bestScoredSentence.score,
+      trustScore: getTemplateTrustRecord(bestScoredSentence.template)?.trustScore || null,
       bestTakeScore: bestScoredSentence.bestTakeScore,
       takeCount: bestScoredSentence.takeCount,
       confirmedTakeCount: bestScoredSentence.confirmedTakeCount,
@@ -1071,5 +1117,6 @@ window.voiceTemplateMatcher = {
   matchVoiceToTemplates,
   matchLearnedVoiceSamples,
   saveLearnedVoiceSample,
-  resetLearnedVoiceSamples
+  resetLearnedVoiceSamples,
+  setSampleTrustStore
 };
