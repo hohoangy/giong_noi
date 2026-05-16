@@ -3211,7 +3211,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 1,
     "positionInPart": 1,
-    "text": "Tôi muốn uống một ly nước lọc ngay bây giờ.",
+    "text": "Tôi muốn uống nước lọc.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3227,7 +3227,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 2,
     "positionInPart": 2,
-    "text": "Bạn giúp tôi đổi tư thế ngồi cho dễ chịu hơn.",
+    "text": "Giúp tôi đổi tư thế ngồi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3243,7 +3243,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 3,
     "positionInPart": 3,
-    "text": "Tôi cần nằm xuống nghỉ khoảng mười phút.",
+    "text": "Tôi cần nằm nghỉ mười phút.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3259,7 +3259,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 4,
     "positionInPart": 4,
-    "text": "Làm ơn mở cửa sổ cho phòng thoáng hơn một chút.",
+    "text": "Mở cửa sổ cho thoáng phòng.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3275,7 +3275,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 5,
     "positionInPart": 5,
-    "text": "Bạn lấy giúp tôi điện thoại đang để trên bàn.",
+    "text": "Lấy giúp tôi điện thoại trên bàn.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3291,7 +3291,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 6,
     "positionInPart": 6,
-    "text": "Tôi muốn bật đèn trong phòng khách lên.",
+    "text": "Bật đèn trong phòng khách.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3307,7 +3307,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 7,
     "positionInPart": 7,
-    "text": "Bạn tắt quạt giúp tôi vì tôi đang thấy lạnh.",
+    "text": "Tắt quạt vì tôi thấy lạnh.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3323,7 +3323,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 8,
     "positionInPart": 8,
-    "text": "Tôi cần đi vệ sinh, bạn giúp tôi chuẩn bị nhé.",
+    "text": "Tôi cần đi vệ sinh.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3339,7 +3339,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 9,
     "positionInPart": 9,
-    "text": "Lấy giúp tôi cái khăn màu trắng ở gần giường.",
+    "text": "Lấy khăn trắng gần giường.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3355,7 +3355,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 10,
     "positionInPart": 10,
-    "text": "Tôi muốn ngồi dậy từ từ để đỡ chóng mặt.",
+    "text": "Tôi muốn ngồi dậy từ từ.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3371,7 +3371,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 11,
     "positionInPart": 11,
-    "text": "Bạn đóng cửa phòng lại giúp tôi một chút.",
+    "text": "Đóng cửa phòng giúp tôi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3387,7 +3387,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 12,
     "positionInPart": 12,
-    "text": "Tôi cần thay áo vì áo này hơi ướt.",
+    "text": "Tôi cần thay áo ướt.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3403,7 +3403,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 13,
     "positionInPart": 13,
-    "text": "Làm ơn kéo rèm cửa lại cho bớt nắng.",
+    "text": "Kéo rèm cửa cho bớt nắng.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3419,7 +3419,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 14,
     "positionInPart": 14,
-    "text": "Tôi muốn nghe lại câu vừa rồi một lần nữa.",
+    "text": "Cho tôi nghe lại câu vừa rồi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3435,7 +3435,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 15,
     "positionInPart": 15,
-    "text": "Bạn đợi tôi một chút trước khi chuyển việc khác.",
+    "text": "Đợi tôi trước khi chuyển việc.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3451,7 +3451,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 16,
     "positionInPart": 16,
-    "text": "Tôi cần không gian yên tĩnh để nghỉ ngơi.",
+    "text": "Tôi cần không gian yên tĩnh.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3467,7 +3467,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 17,
     "positionInPart": 17,
-    "text": "Bạn đặt ly nước ở bên tay phải giúp tôi.",
+    "text": "Đặt ly nước bên tay phải.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3483,7 +3483,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 18,
     "positionInPart": 18,
-    "text": "Tôi muốn chuyển sang ghế khác cho thoải mái hơn.",
+    "text": "Tôi muốn đổi sang ghế khác.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3499,7 +3499,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 19,
     "positionInPart": 19,
-    "text": "Làm ơn kiểm tra xem cửa trước đã khóa chưa.",
+    "text": "Kiểm tra cửa trước đã khóa chưa.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3515,7 +3515,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - nhu cầu cơ bản",
     "positionInGroup": 20,
     "positionInPart": 20,
-    "text": "Tôi ổn rồi, cảm ơn bạn đã giúp tôi.",
+    "text": "Tôi ổn rồi, cảm ơn bạn.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3531,7 +3531,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 21,
     "positionInPart": 21,
-    "text": "Hôm nay tôi thấy hơi đau đầu và cần nghỉ thêm.",
+    "text": "Hôm nay tôi hơi đau đầu.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3547,7 +3547,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 22,
     "positionInPart": 22,
-    "text": "Tôi bị đau vai sau khi ngồi lâu một chỗ.",
+    "text": "Tôi đau vai sau khi ngồi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3563,7 +3563,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 23,
     "positionInPart": 23,
-    "text": "Bạn giúp tôi lấy thuốc trong hộp màu xanh nhé.",
+    "text": "Lấy thuốc trong hộp màu xanh.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3579,7 +3579,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 24,
     "positionInPart": 24,
-    "text": "Tôi cảm thấy hơi khó thở, hãy gọi người nhà giúp tôi.",
+    "text": "Tôi hơi khó thở hôm nay.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3595,7 +3595,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 25,
     "positionInPart": 25,
-    "text": "Làm ơn đo nhiệt độ cho tôi trước khi uống thuốc.",
+    "text": "Đo nhiệt độ giúp tôi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3611,7 +3611,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 26,
     "positionInPart": 26,
-    "text": "Tôi cần uống thuốc sau bữa ăn khoảng mười phút.",
+    "text": "Tôi cần uống thuốc sau ăn.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3627,7 +3627,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 27,
     "positionInPart": 27,
-    "text": "Cổ họng tôi hơi khô, cho tôi uống nước ấm.",
+    "text": "Cho tôi uống nước ấm.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3643,7 +3643,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 28,
     "positionInPart": 28,
-    "text": "Tôi thấy chóng mặt khi đứng dậy quá nhanh.",
+    "text": "Tôi chóng mặt khi đứng dậy.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3659,7 +3659,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 29,
     "positionInPart": 29,
-    "text": "Bạn kiểm tra huyết áp giúp tôi ngay bây giờ.",
+    "text": "Kiểm tra huyết áp giúp tôi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3675,7 +3675,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 30,
     "positionInPart": 30,
-    "text": "Tôi không bị sốt nhưng cơ thể vẫn rất mệt.",
+    "text": "Cơ thể tôi vẫn rất mệt.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3691,7 +3691,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 31,
     "positionInPart": 31,
-    "text": "Tôi muốn đi bộ nhẹ trong nhà vài phút.",
+    "text": "Tôi muốn đi bộ nhẹ.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3707,7 +3707,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 32,
     "positionInPart": 32,
-    "text": "Làm ơn gọi bác sĩ nếu tình trạng này kéo dài.",
+    "text": "Gọi bác sĩ nếu kéo dài.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3723,7 +3723,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 33,
     "positionInPart": 33,
-    "text": "Tôi cần nằm nghiêng sang bên trái một chút.",
+    "text": "Tôi cần nằm nghiêng trái.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3739,7 +3739,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 34,
     "positionInPart": 34,
-    "text": "Mắt tôi hơi mỏi vì nhìn màn hình quá lâu.",
+    "text": "Mắt tôi hơi mỏi hôm nay.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3755,7 +3755,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 35,
     "positionInPart": 35,
-    "text": "Tôi muốn hít thở sâu và bình tĩnh lại.",
+    "text": "Tôi muốn hít thở sâu.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3771,7 +3771,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 36,
     "positionInPart": 36,
-    "text": "Bạn nhắc tôi uống thuốc đúng giờ tối nay.",
+    "text": "Nhắc tôi uống thuốc tối nay.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3787,7 +3787,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 37,
     "positionInPart": 37,
-    "text": "Tôi đang hồi phục tốt hơn so với hôm qua.",
+    "text": "Tôi đang hồi phục tốt hơn.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3803,7 +3803,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 38,
     "positionInPart": 38,
-    "text": "Cơn đau bụng giảm rồi nhưng tôi vẫn cần theo dõi.",
+    "text": "Cơn đau bụng đã giảm.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3819,7 +3819,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 39,
     "positionInPart": 39,
-    "text": "Tôi muốn đặt lịch khám tổng quát trong tuần này.",
+    "text": "Tôi muốn đặt lịch khám.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3835,7 +3835,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - sức khỏe",
     "positionInGroup": 40,
     "positionInPart": 40,
-    "text": "Nếu tôi khó thở hơn, hãy gọi cấp cứu ngay.",
+    "text": "Khó thở hơn thì gọi cấp cứu.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3851,7 +3851,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 41,
     "positionInPart": 41,
-    "text": "Tôi muốn ăn cơm với một ít rau luộc.",
+    "text": "Tôi muốn ăn cơm với rau.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3867,7 +3867,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 42,
     "positionInPart": 42,
-    "text": "Bạn cho tôi thêm một chút nước canh nhé.",
+    "text": "Cho tôi thêm nước canh.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3883,7 +3883,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 43,
     "positionInPart": 43,
-    "text": "Món này hơi mặn với tôi, cho tôi uống nước.",
+    "text": "Món này hơi mặn với tôi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3899,7 +3899,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 44,
     "positionInPart": 44,
-    "text": "Tôi không ăn cay nên bạn đừng thêm ớt.",
+    "text": "Tôi không ăn cay được.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3915,7 +3915,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 45,
     "positionInPart": 45,
-    "text": "Làm ơn hâm nóng phần thức ăn này giúp tôi.",
+    "text": "Hâm nóng phần thức ăn này.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3931,7 +3931,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 46,
     "positionInPart": 46,
-    "text": "Tôi muốn uống sữa ấm trước khi đi ngủ.",
+    "text": "Tôi muốn uống sữa ấm.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3947,7 +3947,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 47,
     "positionInPart": 47,
-    "text": "Bạn lấy giúp tôi cái muỗng ở trong bếp.",
+    "text": "Lấy giúp tôi cái muỗng.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3963,7 +3963,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 48,
     "positionInPart": 48,
-    "text": "Tôi đã no rồi, không cần lấy thêm cơm.",
+    "text": "Tôi no rồi, không thêm cơm.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3979,7 +3979,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 49,
     "positionInPart": 49,
-    "text": "Bữa sáng hôm nay tôi muốn ăn nhẹ thôi.",
+    "text": "Bữa sáng tôi ăn nhẹ thôi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -3995,7 +3995,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 50,
     "positionInPart": 50,
-    "text": "Bạn đặt bát cơm gần tay phải của tôi.",
+    "text": "Đặt bát cơm gần tay phải.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4011,7 +4011,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 51,
     "positionInPart": 51,
-    "text": "Tôi muốn uống trà nóng nhưng đừng pha quá đậm.",
+    "text": "Tôi muốn uống trà nóng.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4027,7 +4027,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 52,
     "positionInPart": 52,
-    "text": "Món này hơi nóng, để nguội thêm một chút.",
+    "text": "Món này nóng, để nguội thêm.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4043,7 +4043,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 53,
     "positionInPart": 53,
-    "text": "Tôi cần ăn chậm hơn để không bị nghẹn.",
+    "text": "Tôi cần ăn chậm hơn.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4059,7 +4059,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 54,
     "positionInPart": 54,
-    "text": "Cho tôi thêm rau nhưng đừng lấy quá nhiều.",
+    "text": "Cho tôi thêm rau vừa đủ.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4075,7 +4075,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 55,
     "positionInPart": 55,
-    "text": "Tôi muốn thử món mềm và dễ nuốt hơn.",
+    "text": "Tôi muốn món mềm dễ nuốt.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4091,7 +4091,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 56,
     "positionInPart": 56,
-    "text": "Bạn giúp tôi cắt nhỏ thức ăn này nhé.",
+    "text": "Cắt nhỏ thức ăn giúp tôi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4107,7 +4107,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 57,
     "positionInPart": 57,
-    "text": "Tôi cần uống nước trước rồi mới ăn tiếp.",
+    "text": "Tôi uống nước rồi ăn tiếp.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4123,7 +4123,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 58,
     "positionInPart": 58,
-    "text": "Tối nay tôi chỉ muốn ăn một phần nhỏ.",
+    "text": "Tối nay tôi ăn phần nhỏ.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4139,7 +4139,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 59,
     "positionInPart": 59,
-    "text": "Nếu còn canh nóng, cho tôi xin một ít.",
+    "text": "Còn canh nóng cho tôi xin.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4155,7 +4155,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - ăn uống",
     "positionInGroup": 60,
     "positionInPart": 60,
-    "text": "Tôi cảm ơn, bữa ăn hôm nay rất vừa miệng.",
+    "text": "Bữa ăn hôm nay vừa miệng.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4171,7 +4171,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 61,
     "positionInPart": 61,
-    "text": "Xin chào, hôm nay bạn có khỏe không.",
+    "text": "Xin chào, hôm nay bạn khỏe không.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4187,7 +4187,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 62,
     "positionInPart": 62,
-    "text": "Bạn nói chậm hơn một chút để tôi nghe rõ.",
+    "text": "Bạn nói chậm để tôi nghe rõ.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4203,7 +4203,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 63,
     "positionInPart": 63,
-    "text": "Tôi chưa hiểu câu vừa rồi, bạn nhắc lại nhé.",
+    "text": "Tôi chưa hiểu, nhắc lại nhé.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4219,7 +4219,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 64,
     "positionInPart": 64,
-    "text": "Cảm ơn bạn đã kiên nhẫn chờ tôi trả lời.",
+    "text": "Cảm ơn bạn đã chờ tôi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4235,7 +4235,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 65,
     "positionInPart": 65,
-    "text": "Tôi muốn nói chuyện với bạn thêm vài phút.",
+    "text": "Tôi muốn nói chuyện thêm.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4251,7 +4251,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 66,
     "positionInPart": 66,
-    "text": "Bạn có thể gọi lại cho tôi vào buổi tối không.",
+    "text": "Bạn gọi lại vào buổi tối.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4267,7 +4267,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 67,
     "positionInPart": 67,
-    "text": "Tôi xin lỗi vì phản hồi hơi chậm hôm nay.",
+    "text": "Tôi xin lỗi vì trả lời chậm.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4283,7 +4283,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 68,
     "positionInPart": 68,
-    "text": "Nếu bạn nghe không rõ, tôi sẽ nói lại lần nữa.",
+    "text": "Không rõ thì tôi nói lại.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4299,7 +4299,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 69,
     "positionInPart": 69,
-    "text": "Tôi muốn gửi lời cảm ơn đến mọi người.",
+    "text": "Tôi muốn cảm ơn mọi người.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4315,7 +4315,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 70,
     "positionInPart": 70,
-    "text": "Bạn giúp tôi nhắn tin cho mẹ được không.",
+    "text": "Nhắn tin cho mẹ giúp tôi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4331,7 +4331,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 71,
     "positionInPart": 71,
-    "text": "Tôi đồng ý với phương án này, chúng ta làm nhé.",
+    "text": "Tôi đồng ý phương án này.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4347,7 +4347,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 72,
     "positionInPart": 72,
-    "text": "Tôi không đồng ý, mình thử cách khác được không.",
+    "text": "Tôi không đồng ý việc này.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4363,7 +4363,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 73,
     "positionInPart": 73,
-    "text": "Bạn cho tôi thêm thời gian để suy nghĩ.",
+    "text": "Cho tôi thêm thời gian nghĩ.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4379,7 +4379,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 74,
     "positionInPart": 74,
-    "text": "Tôi muốn hỏi ý kiến của bạn về việc này.",
+    "text": "Tôi muốn hỏi ý kiến bạn.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4395,7 +4395,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 75,
     "positionInPart": 75,
-    "text": "Hẹn gặp bạn vào cuối tuần nếu bạn rảnh.",
+    "text": "Hẹn gặp bạn cuối tuần.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4411,7 +4411,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 76,
     "positionInPart": 76,
-    "text": "Bạn gửi giúp tôi địa chỉ chính xác nhé.",
+    "text": "Gửi tôi địa chỉ chính xác.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4427,7 +4427,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 77,
     "positionInPart": 77,
-    "text": "Tôi đã hiểu rồi, cảm ơn bạn giải thích.",
+    "text": "Tôi hiểu rồi, cảm ơn bạn.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4443,7 +4443,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 78,
     "positionInPart": 78,
-    "text": "Làm ơn nói từng ý ngắn để tôi dễ theo dõi.",
+    "text": "Nói từng ý ngắn giúp tôi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4459,7 +4459,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 79,
     "positionInPart": 79,
-    "text": "Tôi muốn kết thúc cuộc nói chuyện ở đây.",
+    "text": "Tôi muốn kết thúc ở đây.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4475,7 +4475,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - giao tiếp",
     "positionInGroup": 80,
     "positionInPart": 80,
-    "text": "Chúc bạn có một ngày thật nhẹ nhàng.",
+    "text": "Chúc bạn một ngày nhẹ nhàng.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4491,7 +4491,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 81,
     "positionInPart": 81,
-    "text": "Bạn gọi mẹ giúp tôi vì tôi muốn nói chuyện.",
+    "text": "Gọi mẹ giúp tôi nói chuyện.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4507,7 +4507,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 82,
     "positionInPart": 82,
-    "text": "Tôi muốn về nhà sớm hơn một chút hôm nay.",
+    "text": "Tôi muốn về nhà sớm.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4523,7 +4523,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 83,
     "positionInPart": 83,
-    "text": "Ba đang ở đâu, bạn kiểm tra giúp tôi nhé.",
+    "text": "Ba ở đâu, kiểm tra giúp.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4539,7 +4539,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 84,
     "positionInPart": 84,
-    "text": "Tôi cần vào phòng ngủ để lấy áo khoác.",
+    "text": "Tôi vào phòng lấy áo khoác.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4555,7 +4555,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 85,
     "positionInPart": 85,
-    "text": "Mở tivi nhỏ thôi để tôi nghe tin tức.",
+    "text": "Mở tivi nhỏ thôi nhé.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4571,7 +4571,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 86,
     "positionInPart": 86,
-    "text": "Tắt tivi giúp tôi vì phòng đang hơi ồn.",
+    "text": "Tắt tivi vì phòng hơi ồn.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4587,7 +4587,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 87,
     "positionInPart": 87,
-    "text": "Bạn giúp tôi dọn bàn sau khi ăn xong.",
+    "text": "Dọn bàn sau khi ăn xong.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4603,7 +4603,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 88,
     "positionInPart": 88,
-    "text": "Tôi muốn ra ban công ngồi khoảng năm phút.",
+    "text": "Tôi muốn ra ban công ngồi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4619,7 +4619,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 89,
     "positionInPart": 89,
-    "text": "Làm ơn kiểm tra máy giặt đã chạy xong chưa.",
+    "text": "Kiểm tra máy giặt xong chưa.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4635,7 +4635,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 90,
     "positionInPart": 90,
-    "text": "Tôi cần lấy chìa khóa đang để trên kệ.",
+    "text": "Tôi cần lấy chìa khóa.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4651,7 +4651,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 91,
     "positionInPart": 91,
-    "text": "Bạn khóa cửa trước khi cả nhà đi ngủ nhé.",
+    "text": "Khóa cửa trước khi đi ngủ.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4667,7 +4667,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 92,
     "positionInPart": 92,
-    "text": "Tôi muốn gọi video cho người thân tối nay.",
+    "text": "Tôi muốn gọi video tối nay.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4683,7 +4683,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 93,
     "positionInPart": 93,
-    "text": "Mẹ nấu món này rất ngon, tôi muốn ăn thêm.",
+    "text": "Món này ngon, tôi ăn thêm.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4699,7 +4699,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 94,
     "positionInPart": 94,
-    "text": "Tôi cần nhờ anh đưa tôi đi khám.",
+    "text": "Nhờ anh đưa tôi đi khám.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4715,7 +4715,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 95,
     "positionInPart": 95,
-    "text": "Bạn giúp tôi tìm cái ví màu đen.",
+    "text": "Tìm giúp tôi ví màu đen.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4731,7 +4731,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 96,
     "positionInPart": 96,
-    "text": "Tôi muốn sắp xếp lại góc làm việc trong phòng.",
+    "text": "Tôi muốn sắp xếp góc làm.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4747,7 +4747,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 97,
     "positionInPart": 97,
-    "text": "Nhà hôm nay hơi bừa, mình dọn từng chút nhé.",
+    "text": "Nhà hơi bừa, dọn từng chút.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4763,7 +4763,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 98,
     "positionInPart": 98,
-    "text": "Tôi nghe tiếng chuông cửa, bạn ra xem giúp.",
+    "text": "Có chuông cửa, ra xem giúp.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4779,7 +4779,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 99,
     "positionInPart": 99,
-    "text": "Đèn phòng ngủ hơi sáng, bạn giảm xuống nhé.",
+    "text": "Đèn phòng ngủ hơi sáng.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4795,7 +4795,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - gia đình",
     "positionInGroup": 100,
     "positionInPart": 100,
-    "text": "Tôi muốn cả nhà ăn cơm cùng nhau tối nay.",
+    "text": "Tôi muốn cả nhà ăn cơm.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4811,7 +4811,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 101,
     "positionInPart": 101,
-    "text": "Tôi cần gửi báo cáo trước mười giờ sáng.",
+    "text": "Tôi cần gửi báo cáo sáng nay.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4827,7 +4827,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 102,
     "positionInPart": 102,
-    "text": "Bạn mở giúp tôi tài liệu cuộc họp hôm nay.",
+    "text": "Mở giúp tôi tài liệu họp.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4843,7 +4843,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 103,
     "positionInPart": 103,
-    "text": "Tôi muốn xin nghỉ nửa ngày vào thứ sáu.",
+    "text": "Tôi muốn xin nghỉ nửa ngày.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4859,7 +4859,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 104,
     "positionInPart": 104,
-    "text": "Làm ơn kiểm tra lại lịch họp của tôi.",
+    "text": "Kiểm tra lại lịch họp tôi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4875,7 +4875,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 105,
     "positionInPart": 105,
-    "text": "Tôi cần thêm thời gian để hoàn thành việc này.",
+    "text": "Tôi cần thêm thời gian.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4891,7 +4891,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 106,
     "positionInPart": 106,
-    "text": "Bạn chia sẻ màn hình để tôi xem nội dung.",
+    "text": "Chia sẻ màn hình giúp tôi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4907,7 +4907,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 107,
     "positionInPart": 107,
-    "text": "Tôi vừa cập nhật tiến độ dự án xong.",
+    "text": "Tôi vừa cập nhật tiến độ.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4923,7 +4923,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 108,
     "positionInPart": 108,
-    "text": "Chúng ta nên ưu tiên việc quan trọng trước.",
+    "text": "Ưu tiên việc quan trọng trước.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4939,7 +4939,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 109,
     "positionInPart": 109,
-    "text": "Tôi sẽ trả lời email này sau cuộc họp.",
+    "text": "Tôi trả lời email sau họp.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4955,7 +4955,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 110,
     "positionInPart": 110,
-    "text": "Máy tính của tôi đang chạy chậm hơn bình thường.",
+    "text": "Máy tính của tôi chạy chậm.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4971,7 +4971,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 111,
     "positionInPart": 111,
-    "text": "Bạn giúp tôi ghi chú lại ý chính nhé.",
+    "text": "Ghi chú lại ý chính nhé.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -4987,7 +4987,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 112,
     "positionInPart": 112,
-    "text": "Tôi muốn gọi khách hàng vào đầu giờ chiều.",
+    "text": "Tôi muốn gọi khách hàng.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5003,7 +5003,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 113,
     "positionInPart": 113,
-    "text": "Bản trình bày này cần sửa thêm vài chỗ.",
+    "text": "Bản trình bày cần sửa thêm.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5019,7 +5019,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 114,
     "positionInPart": 114,
-    "text": "Tôi đã nộp bài đúng hạn cho nhóm.",
+    "text": "Tôi đã nộp bài đúng hạn.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5035,7 +5035,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 115,
     "positionInPart": 115,
-    "text": "Nếu mạng yếu, mình chuyển sang gọi điện thoại.",
+    "text": "Mạng yếu thì gọi điện thoại.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5051,7 +5051,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 116,
     "positionInPart": 116,
-    "text": "Tôi cần kiểm tra lại số liệu trước khi gửi.",
+    "text": "Tôi cần kiểm tra số liệu.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5067,7 +5067,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 117,
     "positionInPart": 117,
-    "text": "Cuộc họp hôm nay kéo dài hơn dự kiến.",
+    "text": "Cuộc họp kéo dài hơn dự kiến.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5083,7 +5083,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 118,
     "positionInPart": 118,
-    "text": "Tôi muốn làm việc yên tĩnh trong một giờ.",
+    "text": "Tôi muốn làm việc yên tĩnh.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5099,7 +5099,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 119,
     "positionInPart": 119,
-    "text": "Bạn nhắc tôi gửi email xác nhận tối nay.",
+    "text": "Nhắc tôi gửi email xác nhận.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5115,7 +5115,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công việc",
     "positionInGroup": 120,
     "positionInPart": 120,
-    "text": "Chúng ta chốt phương án này rồi triển khai.",
+    "text": "Chúng ta chốt phương án này.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5131,7 +5131,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 121,
     "positionInPart": 121,
-    "text": "Mở ứng dụng ghi âm giúp tôi ngay bây giờ.",
+    "text": "Mở ứng dụng ghi âm giúp tôi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5147,7 +5147,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 122,
     "positionInPart": 122,
-    "text": "Tăng âm lượng lên một chút để tôi nghe rõ.",
+    "text": "Tăng âm lượng để nghe rõ.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5163,7 +5163,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 123,
     "positionInPart": 123,
-    "text": "Giảm âm lượng xuống vì âm thanh hơi lớn.",
+    "text": "Giảm âm lượng xuống một chút.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5179,7 +5179,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 124,
     "positionInPart": 124,
-    "text": "Phát lại câu vừa rồi để tôi kiểm tra.",
+    "text": "Phát lại câu vừa rồi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5195,7 +5195,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 125,
     "positionInPart": 125,
-    "text": "Xóa nội dung tôi vừa nói và bắt đầu lại.",
+    "text": "Xóa nội dung tôi vừa nói.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5211,7 +5211,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 126,
     "positionInPart": 126,
-    "text": "Lưu đoạn ghi âm này vào thư mục hôm nay.",
+    "text": "Lưu đoạn ghi âm này.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5227,7 +5227,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 127,
     "positionInPart": 127,
-    "text": "Chuyển sang câu tiếp theo trong danh sách.",
+    "text": "Chuyển sang câu tiếp theo.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5243,7 +5243,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 128,
     "positionInPart": 128,
-    "text": "Quay lại mục trước để tôi thu âm lại.",
+    "text": "Quay lại mục trước giúp tôi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5259,7 +5259,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 129,
     "positionInPart": 129,
-    "text": "Bật bluetooth để kết nối với tai nghe.",
+    "text": "Bật bluetooth kết nối tai nghe.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5275,7 +5275,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 130,
     "positionInPart": 130,
-    "text": "Tắt nhạc khi tôi bắt đầu nói câu mới.",
+    "text": "Tắt nhạc khi tôi nói.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5291,7 +5291,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 131,
     "positionInPart": 131,
-    "text": "Mở camera trước để tôi chụp một tấm ảnh.",
+    "text": "Mở camera trước giúp tôi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5307,7 +5307,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 132,
     "positionInPart": 132,
-    "text": "Kiểm tra pin điện thoại giúp tôi một chút.",
+    "text": "Kiểm tra pin điện thoại.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5323,7 +5323,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 133,
     "positionInPart": 133,
-    "text": "Tải lại trang này nếu màn hình bị treo.",
+    "text": "Tải lại trang bị treo.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5339,7 +5339,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 134,
     "positionInPart": 134,
-    "text": "Tìm file ghi âm gần nhất cho tôi.",
+    "text": "Tìm file ghi âm gần nhất.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5355,7 +5355,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 135,
     "positionInPart": 135,
-    "text": "Tôi không đăng nhập được vào tài khoản.",
+    "text": "Tôi không đăng nhập được.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5371,7 +5371,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 136,
     "positionInPart": 136,
-    "text": "Mật khẩu của tôi có vẻ không chính xác.",
+    "text": "Mật khẩu có vẻ không đúng.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5387,7 +5387,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 137,
     "positionInPart": 137,
-    "text": "Ứng dụng đang bị treo, hãy thử mở lại.",
+    "text": "Ứng dụng treo, mở lại.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5403,7 +5403,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 138,
     "positionInPart": 138,
-    "text": "Kết nối mạng hôm nay yếu hơn bình thường.",
+    "text": "Kết nối mạng hôm nay yếu.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5419,7 +5419,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 139,
     "positionInPart": 139,
-    "text": "Micro của tôi không hoạt động ổn định.",
+    "text": "Micro không hoạt động ổn định.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5435,7 +5435,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - công nghệ",
     "positionInGroup": 140,
     "positionInPart": 140,
-    "text": "Tôi muốn gửi phản hồi cho bộ phận hỗ trợ.",
+    "text": "Tôi muốn gửi phản hồi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5451,7 +5451,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 141,
     "positionInPart": 141,
-    "text": "Tôi muốn đi đến trung tâm thành phố.",
+    "text": "Tôi muốn đến trung tâm.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5467,7 +5467,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 142,
     "positionInPart": 142,
-    "text": "Bạn chỉ đường giúp tôi đến bệnh viện gần nhất.",
+    "text": "Chỉ đường đến bệnh viện gần nhất.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5483,7 +5483,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 143,
     "positionInPart": 143,
-    "text": "Đi thẳng thêm khoảng hai trăm mét nữa.",
+    "text": "Đi thẳng thêm hai trăm mét.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5499,7 +5499,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 144,
     "positionInPart": 144,
-    "text": "Rẽ trái ở ngã tư phía trước nhé.",
+    "text": "Rẽ trái ở ngã tư trước.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5515,7 +5515,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 145,
     "positionInPart": 145,
-    "text": "Cho tôi xuống ở trạm xe tiếp theo.",
+    "text": "Cho tôi xuống trạm tiếp theo.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5531,7 +5531,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 146,
     "positionInPart": 146,
-    "text": "Tôi đang chờ xe trước cửa nhà.",
+    "text": "Tôi chờ xe trước cửa nhà.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5547,7 +5547,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 147,
     "positionInPart": 147,
-    "text": "Chuyến xe này có đi qua sân bay không.",
+    "text": "Xe này có qua sân bay không.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5563,7 +5563,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 148,
     "positionInPart": 148,
-    "text": "Tôi cần đặt một chuyến xe công nghệ.",
+    "text": "Tôi cần đặt xe công nghệ.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5579,7 +5579,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 149,
     "positionInPart": 149,
-    "text": "Từ đây đến công ty mất bao lâu.",
+    "text": "Đến công ty mất bao lâu.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5595,7 +5595,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 150,
     "positionInPart": 150,
-    "text": "Hôm nay đường đông hơn bình thường.",
+    "text": "Hôm nay đường đông hơn.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5611,7 +5611,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 151,
     "positionInPart": 151,
-    "text": "Tôi muốn chọn tuyến đường nhanh nhất.",
+    "text": "Tôi muốn tuyến đường nhanh nhất.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5627,7 +5627,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 152,
     "positionInPart": 152,
-    "text": "Bãi đỗ xe nằm ở tầng hầm phải không.",
+    "text": "Bãi đỗ ở tầng hầm phải không.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5643,7 +5643,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 153,
     "positionInPart": 153,
-    "text": "Tôi quên mang theo vé xe buýt.",
+    "text": "Tôi quên mang vé xe buýt.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5659,7 +5659,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 154,
     "positionInPart": 154,
-    "text": "Giúp tôi kiểm tra giờ khởi hành của chuyến xe.",
+    "text": "Kiểm tra giờ khởi hành giúp tôi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5675,7 +5675,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 155,
     "positionInPart": 155,
-    "text": "Tôi sẽ tới nơi trong mười phút nữa.",
+    "text": "Tôi tới nơi trong mười phút.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5691,7 +5691,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 156,
     "positionInPart": 156,
-    "text": "Đường về nhà tối nay khá vắng.",
+    "text": "Đường về nhà tối nay vắng.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5707,7 +5707,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 157,
     "positionInPart": 157,
-    "text": "Tôi muốn xuống ở gần công viên.",
+    "text": "Tôi muốn xuống gần công viên.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5723,7 +5723,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 158,
     "positionInPart": 158,
-    "text": "Chúng ta đi bộ thêm một đoạn ngắn nhé.",
+    "text": "Chúng ta đi bộ thêm chút.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5739,7 +5739,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 159,
     "positionInPart": 159,
-    "text": "Tôi đang đứng trước cửa hàng tiện lợi.",
+    "text": "Tôi đứng trước cửa hàng tiện lợi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5755,7 +5755,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - di chuyển",
     "positionInGroup": 160,
     "positionInPart": 160,
-    "text": "Xe của tôi đang gần hết xăng.",
+    "text": "Xe của tôi gần hết xăng.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5771,7 +5771,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 161,
     "positionInPart": 161,
-    "text": "Hôm nay tôi cảm thấy vui hơn hôm qua.",
+    "text": "Hôm nay tôi cảm thấy vui.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5787,7 +5787,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 162,
     "positionInPart": 162,
-    "text": "Tôi hơi lo lắng về cuộc hẹn chiều nay.",
+    "text": "Tôi hơi lo cuộc hẹn chiều.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5803,7 +5803,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 163,
     "positionInPart": 163,
-    "text": "Bạn nói chuyện nhẹ nhàng để tôi bình tĩnh lại.",
+    "text": "Nói nhẹ nhàng để tôi bình tĩnh.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5819,7 +5819,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 164,
     "positionInPart": 164,
-    "text": "Tôi muốn ở một mình trong vài phút.",
+    "text": "Tôi muốn ở một mình.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5835,7 +5835,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 165,
     "positionInPart": 165,
-    "text": "Không gian này hơi ồn nên tôi thấy khó chịu.",
+    "text": "Không gian ồn làm tôi khó chịu.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5851,7 +5851,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 166,
     "positionInPart": 166,
-    "text": "Tôi đang căng thẳng và cần hít thở sâu.",
+    "text": "Tôi căng thẳng, cần hít thở.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5867,7 +5867,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 167,
     "positionInPart": 167,
-    "text": "Tôi rất biết ơn vì bạn đã giúp tôi.",
+    "text": "Tôi biết ơn bạn đã giúp.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5883,7 +5883,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 168,
     "positionInPart": 168,
-    "text": "Tôi cảm thấy tự tin hơn khi luyện mỗi ngày.",
+    "text": "Tôi tự tin hơn mỗi ngày.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5899,7 +5899,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 169,
     "positionInPart": 169,
-    "text": "Bài tập này làm tôi thấy thoải mái hơn.",
+    "text": "Bài tập này làm tôi thoải mái.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5915,7 +5915,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 170,
     "positionInPart": 170,
-    "text": "Tôi không thích cách nói quá nhanh.",
+    "text": "Tôi không thích nói quá nhanh.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5931,7 +5931,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 171,
     "positionInPart": 171,
-    "text": "Tôi muốn bắt đầu từ những câu quen thuộc.",
+    "text": "Tôi muốn bắt đầu từ câu quen.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5947,7 +5947,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 172,
     "positionInPart": 172,
-    "text": "Kết quả hiển thị rõ ràng làm tôi yên tâm.",
+    "text": "Kết quả rõ làm tôi yên tâm.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5963,7 +5963,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 173,
     "positionInPart": 173,
-    "text": "Tôi cần một ngày thật nhẹ nhàng hôm nay.",
+    "text": "Tôi cần một ngày nhẹ nhàng.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5979,7 +5979,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 174,
     "positionInPart": 174,
-    "text": "Tôi thấy hơi bối rối khi có quá nhiều lựa chọn.",
+    "text": "Tôi hơi bối rối hôm nay.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -5995,7 +5995,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 175,
     "positionInPart": 175,
-    "text": "Bạn đừng vội, tôi cần thêm thời gian.",
+    "text": "Đừng vội, tôi cần thêm thời gian.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6011,7 +6011,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 176,
     "positionInPart": 176,
-    "text": "Tôi vui vì hệ thống hiểu giọng của tôi hơn.",
+    "text": "Tôi vui vì app hiểu hơn.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6027,7 +6027,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 177,
     "positionInPart": 177,
-    "text": "Tôi hơi buồn nhưng vẫn muốn luyện tiếp.",
+    "text": "Tôi hơi buồn nhưng muốn luyện.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6043,7 +6043,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 178,
     "positionInPart": 178,
-    "text": "Tâm trạng hôm nay của tôi khá ổn.",
+    "text": "Tâm trạng hôm nay khá ổn.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6059,7 +6059,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 179,
     "positionInPart": 179,
-    "text": "Tôi muốn giữ tinh thần tích cực mỗi ngày.",
+    "text": "Tôi muốn giữ tinh thần tích cực.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6075,7 +6075,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - cảm xúc",
     "positionInGroup": 180,
     "positionInPart": 180,
-    "text": "Cảm ơn bạn đã lắng nghe tôi chậm rãi.",
+    "text": "Cảm ơn bạn đã lắng nghe.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6091,7 +6091,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 181,
     "positionInPart": 181,
-    "text": "Tôi đang khó thở, hãy gọi cấp cứu ngay.",
+    "text": "Tôi khó thở, gọi cấp cứu.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6107,7 +6107,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 182,
     "positionInPart": 182,
-    "text": "Tôi bị ngã và không thể đứng dậy được.",
+    "text": "Tôi bị ngã, không đứng được.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6123,7 +6123,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 183,
     "positionInPart": 183,
-    "text": "Gọi người nhà giúp tôi càng sớm càng tốt.",
+    "text": "Gọi người nhà giúp tôi ngay.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6139,7 +6139,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 184,
     "positionInPart": 184,
-    "text": "Tôi đau nhiều hơn, cần kiểm tra ngay bây giờ.",
+    "text": "Tôi đau hơn, cần kiểm tra.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6155,7 +6155,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 185,
     "positionInPart": 185,
-    "text": "Bạn ở lại đây với tôi thêm một chút.",
+    "text": "Ở lại đây với tôi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6171,7 +6171,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 186,
     "positionInPart": 186,
-    "text": "Mở cửa ngay để người bên ngoài vào giúp.",
+    "text": "Mở cửa ngay để vào giúp.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6187,7 +6187,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 187,
     "positionInPart": 187,
-    "text": "Đưa điện thoại cho tôi để gọi người thân.",
+    "text": "Đưa điện thoại để gọi người thân.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6203,7 +6203,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 188,
     "positionInPart": 188,
-    "text": "Làm ơn lấy thuốc khẩn cấp trong túi nhỏ.",
+    "text": "Lấy thuốc khẩn cấp trong túi.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6219,7 +6219,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 189,
     "positionInPart": 189,
-    "text": "Tôi không nói rõ được, hãy nhìn ký hiệu của tôi.",
+    "text": "Tôi không nói rõ được.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6235,7 +6235,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 190,
     "positionInPart": 190,
-    "text": "Nếu tôi lịm đi, hãy gọi bác sĩ ngay lập tức.",
+    "text": "Tôi lịm đi thì gọi bác sĩ.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6251,7 +6251,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 191,
     "positionInPart": 191,
-    "text": "Tôi cần được đưa đến bệnh viện gần nhất.",
+    "text": "Đưa tôi đến bệnh viện gần nhất.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6267,7 +6267,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 192,
     "positionInPart": 192,
-    "text": "Đừng để tôi ở một mình trong lúc này.",
+    "text": "Đừng để tôi ở một mình.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6283,7 +6283,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 193,
     "positionInPart": 193,
-    "text": "Bật chuông báo để mọi người nghe thấy.",
+    "text": "Bật chuông báo cho mọi người.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6299,7 +6299,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 194,
     "positionInPart": 194,
-    "text": "Kiểm tra xem tôi còn thở đều không.",
+    "text": "Kiểm tra tôi còn thở đều.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6315,7 +6315,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 195,
     "positionInPart": 195,
-    "text": "Tôi đang rất hoảng, hãy nói chậm với tôi.",
+    "text": "Tôi hoảng, hãy nói chậm.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6331,7 +6331,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 196,
     "positionInPart": 196,
-    "text": "Có vật cản dưới chân, hãy dọn ra giúp tôi.",
+    "text": "Dọn vật cản dưới chân.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6347,7 +6347,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 197,
     "positionInPart": 197,
-    "text": "Tôi cần xe lăn ngay cạnh giường.",
+    "text": "Tôi cần xe lăn cạnh giường.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6363,7 +6363,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 198,
     "positionInPart": 198,
-    "text": "Đừng nâng tôi lên quá nhanh, tôi đang chóng mặt.",
+    "text": "Đừng nâng tôi quá nhanh.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6379,7 +6379,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 199,
     "positionInPart": 199,
-    "text": "Hãy gọi cấp cứu nếu cơn đau không giảm.",
+    "text": "Gọi cấp cứu nếu đau không giảm.",
     "priority": true,
     "utteranceType": "long"
   },
@@ -6395,7 +6395,7 @@ window.MONTH2_CORPUS = [
     "categoryName": "Câu dài - khẩn cấp",
     "positionInGroup": 200,
     "positionInPart": 200,
-    "text": "Mọi người bình tĩnh và làm từng bước nhé.",
+    "text": "Mọi người bình tĩnh từng bước.",
     "priority": true,
     "utteranceType": "long"
   }

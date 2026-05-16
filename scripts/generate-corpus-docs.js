@@ -102,7 +102,7 @@ lines.push("");
 lines.push(`- Tổng số mẫu: ${corpus.length}.`);
 lines.push(`- Câu ngắn: ${shortItems.length} mẫu, dùng để học phát âm theo từ/cụm và sửa phrase.`);
 lines.push(
-  `- Câu dài: ${longItems.length} mẫu, dùng để học ngữ cảnh, sentence matching và final output.`,
+  `- Câu dài: ${longItems.length} mẫu, đã rút còn khoảng 5-7 từ để học ngữ cảnh và sentence matching ổn định hơn.`,
 );
 lines.push("- Mỗi pack trong giao diện gồm 10 câu để điều hướng nhanh.");
 lines.push("- Mỗi câu nên thu 1 file riêng, đọc đúng nội dung đang hiển thị.");
@@ -133,7 +133,7 @@ lines.push(
 lines.push(
   ...renderType(
     "Danh sách 200 câu dài",
-    "Câu dài dùng để học ngữ cảnh giao tiếp, sentence matching và chọn final output khi confidence đủ cao.",
+    "Câu dài dùng để học ngữ cảnh giao tiếp, nhưng được giữ ở khoảng 5-7 từ để dễ thu âm, dễ khớp mẫu và giảm sai lệch nhịp đọc.",
     "long",
   ),
 );

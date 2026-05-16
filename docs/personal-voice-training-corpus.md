@@ -13,7 +13,7 @@ Tài liệu này mô tả bộ dữ liệu câu mẫu đang được app sử d�
 
 - Tổng số mẫu: 400.
 - Câu ngắn: 200 mẫu, dùng để học phát âm theo từ/cụm và sửa phrase.
-- Câu dài: 200 mẫu, dùng để học ngữ cảnh, sentence matching và final output.
+- Câu dài: 200 mẫu, đã rút còn khoảng 5-7 từ để học ngữ cảnh và sentence matching ổn định hơn.
 - Mỗi pack trong giao diện gồm 10 câu để điều hướng nhanh.
 - Mỗi câu nên thu 1 file riêng, đọc đúng nội dung đang hiển thị.
 
@@ -328,7 +328,7 @@ Tổng cộng: 200 mẫu.
 
 ## Danh sách 200 câu dài
 
-Câu dài dùng để học ngữ cảnh giao tiếp, sentence matching và chọn final output khi confidence đủ cao.
+Câu dài dùng để học ngữ cảnh giao tiếp, nhưng được giữ ở khoảng 5-7 từ để dễ thu âm, dễ khớp mẫu và giảm sai lệch nhịp đọc.
 
 Tổng cộng: 200 mẫu.
 
@@ -336,249 +336,249 @@ Tổng cộng: 200 mẫu.
 
 | ID | Câu mẫu | Pack thu âm |
 | --- | --- | --- |
-| S201 | Tôi muốn uống một ly nước lọc ngay bây giờ. | Câu dài 01 |
-| S202 | Bạn giúp tôi đổi tư thế ngồi cho dễ chịu hơn. | Câu dài 01 |
-| S203 | Tôi cần nằm xuống nghỉ khoảng mười phút. | Câu dài 01 |
-| S204 | Làm ơn mở cửa sổ cho phòng thoáng hơn một chút. | Câu dài 01 |
-| S205 | Bạn lấy giúp tôi điện thoại đang để trên bàn. | Câu dài 01 |
-| S206 | Tôi muốn bật đèn trong phòng khách lên. | Câu dài 01 |
-| S207 | Bạn tắt quạt giúp tôi vì tôi đang thấy lạnh. | Câu dài 01 |
-| S208 | Tôi cần đi vệ sinh, bạn giúp tôi chuẩn bị nhé. | Câu dài 01 |
-| S209 | Lấy giúp tôi cái khăn màu trắng ở gần giường. | Câu dài 01 |
-| S210 | Tôi muốn ngồi dậy từ từ để đỡ chóng mặt. | Câu dài 01 |
-| S211 | Bạn đóng cửa phòng lại giúp tôi một chút. | Câu dài 02 |
-| S212 | Tôi cần thay áo vì áo này hơi ướt. | Câu dài 02 |
-| S213 | Làm ơn kéo rèm cửa lại cho bớt nắng. | Câu dài 02 |
-| S214 | Tôi muốn nghe lại câu vừa rồi một lần nữa. | Câu dài 02 |
-| S215 | Bạn đợi tôi một chút trước khi chuyển việc khác. | Câu dài 02 |
-| S216 | Tôi cần không gian yên tĩnh để nghỉ ngơi. | Câu dài 02 |
-| S217 | Bạn đặt ly nước ở bên tay phải giúp tôi. | Câu dài 02 |
-| S218 | Tôi muốn chuyển sang ghế khác cho thoải mái hơn. | Câu dài 02 |
-| S219 | Làm ơn kiểm tra xem cửa trước đã khóa chưa. | Câu dài 02 |
-| S220 | Tôi ổn rồi, cảm ơn bạn đã giúp tôi. | Câu dài 02 |
+| S201 | Tôi muốn uống nước lọc. | Câu dài 01 |
+| S202 | Giúp tôi đổi tư thế ngồi. | Câu dài 01 |
+| S203 | Tôi cần nằm nghỉ mười phút. | Câu dài 01 |
+| S204 | Mở cửa sổ cho thoáng phòng. | Câu dài 01 |
+| S205 | Lấy giúp tôi điện thoại trên bàn. | Câu dài 01 |
+| S206 | Bật đèn trong phòng khách. | Câu dài 01 |
+| S207 | Tắt quạt vì tôi thấy lạnh. | Câu dài 01 |
+| S208 | Tôi cần đi vệ sinh. | Câu dài 01 |
+| S209 | Lấy khăn trắng gần giường. | Câu dài 01 |
+| S210 | Tôi muốn ngồi dậy từ từ. | Câu dài 01 |
+| S211 | Đóng cửa phòng giúp tôi. | Câu dài 02 |
+| S212 | Tôi cần thay áo ướt. | Câu dài 02 |
+| S213 | Kéo rèm cửa cho bớt nắng. | Câu dài 02 |
+| S214 | Cho tôi nghe lại câu vừa rồi. | Câu dài 02 |
+| S215 | Đợi tôi trước khi chuyển việc. | Câu dài 02 |
+| S216 | Tôi cần không gian yên tĩnh. | Câu dài 02 |
+| S217 | Đặt ly nước bên tay phải. | Câu dài 02 |
+| S218 | Tôi muốn đổi sang ghế khác. | Câu dài 02 |
+| S219 | Kiểm tra cửa trước đã khóa chưa. | Câu dài 02 |
+| S220 | Tôi ổn rồi, cảm ơn bạn. | Câu dài 02 |
 
 ### LONG2. Câu dài - sức khỏe
 
 | ID | Câu mẫu | Pack thu âm |
 | --- | --- | --- |
-| S221 | Hôm nay tôi thấy hơi đau đầu và cần nghỉ thêm. | Câu dài 03 |
-| S222 | Tôi bị đau vai sau khi ngồi lâu một chỗ. | Câu dài 03 |
-| S223 | Bạn giúp tôi lấy thuốc trong hộp màu xanh nhé. | Câu dài 03 |
-| S224 | Tôi cảm thấy hơi khó thở, hãy gọi người nhà giúp tôi. | Câu dài 03 |
-| S225 | Làm ơn đo nhiệt độ cho tôi trước khi uống thuốc. | Câu dài 03 |
-| S226 | Tôi cần uống thuốc sau bữa ăn khoảng mười phút. | Câu dài 03 |
-| S227 | Cổ họng tôi hơi khô, cho tôi uống nước ấm. | Câu dài 03 |
-| S228 | Tôi thấy chóng mặt khi đứng dậy quá nhanh. | Câu dài 03 |
-| S229 | Bạn kiểm tra huyết áp giúp tôi ngay bây giờ. | Câu dài 03 |
-| S230 | Tôi không bị sốt nhưng cơ thể vẫn rất mệt. | Câu dài 03 |
-| S231 | Tôi muốn đi bộ nhẹ trong nhà vài phút. | Câu dài 04 |
-| S232 | Làm ơn gọi bác sĩ nếu tình trạng này kéo dài. | Câu dài 04 |
-| S233 | Tôi cần nằm nghiêng sang bên trái một chút. | Câu dài 04 |
-| S234 | Mắt tôi hơi mỏi vì nhìn màn hình quá lâu. | Câu dài 04 |
-| S235 | Tôi muốn hít thở sâu và bình tĩnh lại. | Câu dài 04 |
-| S236 | Bạn nhắc tôi uống thuốc đúng giờ tối nay. | Câu dài 04 |
-| S237 | Tôi đang hồi phục tốt hơn so với hôm qua. | Câu dài 04 |
-| S238 | Cơn đau bụng giảm rồi nhưng tôi vẫn cần theo dõi. | Câu dài 04 |
-| S239 | Tôi muốn đặt lịch khám tổng quát trong tuần này. | Câu dài 04 |
-| S240 | Nếu tôi khó thở hơn, hãy gọi cấp cứu ngay. | Câu dài 04 |
+| S221 | Hôm nay tôi hơi đau đầu. | Câu dài 03 |
+| S222 | Tôi đau vai sau khi ngồi. | Câu dài 03 |
+| S223 | Lấy thuốc trong hộp màu xanh. | Câu dài 03 |
+| S224 | Tôi hơi khó thở hôm nay. | Câu dài 03 |
+| S225 | Đo nhiệt độ giúp tôi. | Câu dài 03 |
+| S226 | Tôi cần uống thuốc sau ăn. | Câu dài 03 |
+| S227 | Cho tôi uống nước ấm. | Câu dài 03 |
+| S228 | Tôi chóng mặt khi đứng dậy. | Câu dài 03 |
+| S229 | Kiểm tra huyết áp giúp tôi. | Câu dài 03 |
+| S230 | Cơ thể tôi vẫn rất mệt. | Câu dài 03 |
+| S231 | Tôi muốn đi bộ nhẹ. | Câu dài 04 |
+| S232 | Gọi bác sĩ nếu kéo dài. | Câu dài 04 |
+| S233 | Tôi cần nằm nghiêng trái. | Câu dài 04 |
+| S234 | Mắt tôi hơi mỏi hôm nay. | Câu dài 04 |
+| S235 | Tôi muốn hít thở sâu. | Câu dài 04 |
+| S236 | Nhắc tôi uống thuốc tối nay. | Câu dài 04 |
+| S237 | Tôi đang hồi phục tốt hơn. | Câu dài 04 |
+| S238 | Cơn đau bụng đã giảm. | Câu dài 04 |
+| S239 | Tôi muốn đặt lịch khám. | Câu dài 04 |
+| S240 | Khó thở hơn thì gọi cấp cứu. | Câu dài 04 |
 
 ### LONG3. Câu dài - ăn uống
 
 | ID | Câu mẫu | Pack thu âm |
 | --- | --- | --- |
-| S241 | Tôi muốn ăn cơm với một ít rau luộc. | Câu dài 05 |
-| S242 | Bạn cho tôi thêm một chút nước canh nhé. | Câu dài 05 |
-| S243 | Món này hơi mặn với tôi, cho tôi uống nước. | Câu dài 05 |
-| S244 | Tôi không ăn cay nên bạn đừng thêm ớt. | Câu dài 05 |
-| S245 | Làm ơn hâm nóng phần thức ăn này giúp tôi. | Câu dài 05 |
-| S246 | Tôi muốn uống sữa ấm trước khi đi ngủ. | Câu dài 05 |
-| S247 | Bạn lấy giúp tôi cái muỗng ở trong bếp. | Câu dài 05 |
-| S248 | Tôi đã no rồi, không cần lấy thêm cơm. | Câu dài 05 |
-| S249 | Bữa sáng hôm nay tôi muốn ăn nhẹ thôi. | Câu dài 05 |
-| S250 | Bạn đặt bát cơm gần tay phải của tôi. | Câu dài 05 |
-| S251 | Tôi muốn uống trà nóng nhưng đừng pha quá đậm. | Câu dài 06 |
-| S252 | Món này hơi nóng, để nguội thêm một chút. | Câu dài 06 |
-| S253 | Tôi cần ăn chậm hơn để không bị nghẹn. | Câu dài 06 |
-| S254 | Cho tôi thêm rau nhưng đừng lấy quá nhiều. | Câu dài 06 |
-| S255 | Tôi muốn thử món mềm và dễ nuốt hơn. | Câu dài 06 |
-| S256 | Bạn giúp tôi cắt nhỏ thức ăn này nhé. | Câu dài 06 |
-| S257 | Tôi cần uống nước trước rồi mới ăn tiếp. | Câu dài 06 |
-| S258 | Tối nay tôi chỉ muốn ăn một phần nhỏ. | Câu dài 06 |
-| S259 | Nếu còn canh nóng, cho tôi xin một ít. | Câu dài 06 |
-| S260 | Tôi cảm ơn, bữa ăn hôm nay rất vừa miệng. | Câu dài 06 |
+| S241 | Tôi muốn ăn cơm với rau. | Câu dài 05 |
+| S242 | Cho tôi thêm nước canh. | Câu dài 05 |
+| S243 | Món này hơi mặn với tôi. | Câu dài 05 |
+| S244 | Tôi không ăn cay được. | Câu dài 05 |
+| S245 | Hâm nóng phần thức ăn này. | Câu dài 05 |
+| S246 | Tôi muốn uống sữa ấm. | Câu dài 05 |
+| S247 | Lấy giúp tôi cái muỗng. | Câu dài 05 |
+| S248 | Tôi no rồi, không thêm cơm. | Câu dài 05 |
+| S249 | Bữa sáng tôi ăn nhẹ thôi. | Câu dài 05 |
+| S250 | Đặt bát cơm gần tay phải. | Câu dài 05 |
+| S251 | Tôi muốn uống trà nóng. | Câu dài 06 |
+| S252 | Món này nóng, để nguội thêm. | Câu dài 06 |
+| S253 | Tôi cần ăn chậm hơn. | Câu dài 06 |
+| S254 | Cho tôi thêm rau vừa đủ. | Câu dài 06 |
+| S255 | Tôi muốn món mềm dễ nuốt. | Câu dài 06 |
+| S256 | Cắt nhỏ thức ăn giúp tôi. | Câu dài 06 |
+| S257 | Tôi uống nước rồi ăn tiếp. | Câu dài 06 |
+| S258 | Tối nay tôi ăn phần nhỏ. | Câu dài 06 |
+| S259 | Còn canh nóng cho tôi xin. | Câu dài 06 |
+| S260 | Bữa ăn hôm nay vừa miệng. | Câu dài 06 |
 
 ### LONG4. Câu dài - giao tiếp
 
 | ID | Câu mẫu | Pack thu âm |
 | --- | --- | --- |
-| S261 | Xin chào, hôm nay bạn có khỏe không. | Câu dài 07 |
-| S262 | Bạn nói chậm hơn một chút để tôi nghe rõ. | Câu dài 07 |
-| S263 | Tôi chưa hiểu câu vừa rồi, bạn nhắc lại nhé. | Câu dài 07 |
-| S264 | Cảm ơn bạn đã kiên nhẫn chờ tôi trả lời. | Câu dài 07 |
-| S265 | Tôi muốn nói chuyện với bạn thêm vài phút. | Câu dài 07 |
-| S266 | Bạn có thể gọi lại cho tôi vào buổi tối không. | Câu dài 07 |
-| S267 | Tôi xin lỗi vì phản hồi hơi chậm hôm nay. | Câu dài 07 |
-| S268 | Nếu bạn nghe không rõ, tôi sẽ nói lại lần nữa. | Câu dài 07 |
-| S269 | Tôi muốn gửi lời cảm ơn đến mọi người. | Câu dài 07 |
-| S270 | Bạn giúp tôi nhắn tin cho mẹ được không. | Câu dài 07 |
-| S271 | Tôi đồng ý với phương án này, chúng ta làm nhé. | Câu dài 08 |
-| S272 | Tôi không đồng ý, mình thử cách khác được không. | Câu dài 08 |
-| S273 | Bạn cho tôi thêm thời gian để suy nghĩ. | Câu dài 08 |
-| S274 | Tôi muốn hỏi ý kiến của bạn về việc này. | Câu dài 08 |
-| S275 | Hẹn gặp bạn vào cuối tuần nếu bạn rảnh. | Câu dài 08 |
-| S276 | Bạn gửi giúp tôi địa chỉ chính xác nhé. | Câu dài 08 |
-| S277 | Tôi đã hiểu rồi, cảm ơn bạn giải thích. | Câu dài 08 |
-| S278 | Làm ơn nói từng ý ngắn để tôi dễ theo dõi. | Câu dài 08 |
-| S279 | Tôi muốn kết thúc cuộc nói chuyện ở đây. | Câu dài 08 |
-| S280 | Chúc bạn có một ngày thật nhẹ nhàng. | Câu dài 08 |
+| S261 | Xin chào, hôm nay bạn khỏe không. | Câu dài 07 |
+| S262 | Bạn nói chậm để tôi nghe rõ. | Câu dài 07 |
+| S263 | Tôi chưa hiểu, nhắc lại nhé. | Câu dài 07 |
+| S264 | Cảm ơn bạn đã chờ tôi. | Câu dài 07 |
+| S265 | Tôi muốn nói chuyện thêm. | Câu dài 07 |
+| S266 | Bạn gọi lại vào buổi tối. | Câu dài 07 |
+| S267 | Tôi xin lỗi vì trả lời chậm. | Câu dài 07 |
+| S268 | Không rõ thì tôi nói lại. | Câu dài 07 |
+| S269 | Tôi muốn cảm ơn mọi người. | Câu dài 07 |
+| S270 | Nhắn tin cho mẹ giúp tôi. | Câu dài 07 |
+| S271 | Tôi đồng ý phương án này. | Câu dài 08 |
+| S272 | Tôi không đồng ý việc này. | Câu dài 08 |
+| S273 | Cho tôi thêm thời gian nghĩ. | Câu dài 08 |
+| S274 | Tôi muốn hỏi ý kiến bạn. | Câu dài 08 |
+| S275 | Hẹn gặp bạn cuối tuần. | Câu dài 08 |
+| S276 | Gửi tôi địa chỉ chính xác. | Câu dài 08 |
+| S277 | Tôi hiểu rồi, cảm ơn bạn. | Câu dài 08 |
+| S278 | Nói từng ý ngắn giúp tôi. | Câu dài 08 |
+| S279 | Tôi muốn kết thúc ở đây. | Câu dài 08 |
+| S280 | Chúc bạn một ngày nhẹ nhàng. | Câu dài 08 |
 
 ### LONG5. Câu dài - gia đình
 
 | ID | Câu mẫu | Pack thu âm |
 | --- | --- | --- |
-| S281 | Bạn gọi mẹ giúp tôi vì tôi muốn nói chuyện. | Câu dài 09 |
-| S282 | Tôi muốn về nhà sớm hơn một chút hôm nay. | Câu dài 09 |
-| S283 | Ba đang ở đâu, bạn kiểm tra giúp tôi nhé. | Câu dài 09 |
-| S284 | Tôi cần vào phòng ngủ để lấy áo khoác. | Câu dài 09 |
-| S285 | Mở tivi nhỏ thôi để tôi nghe tin tức. | Câu dài 09 |
-| S286 | Tắt tivi giúp tôi vì phòng đang hơi ồn. | Câu dài 09 |
-| S287 | Bạn giúp tôi dọn bàn sau khi ăn xong. | Câu dài 09 |
-| S288 | Tôi muốn ra ban công ngồi khoảng năm phút. | Câu dài 09 |
-| S289 | Làm ơn kiểm tra máy giặt đã chạy xong chưa. | Câu dài 09 |
-| S290 | Tôi cần lấy chìa khóa đang để trên kệ. | Câu dài 09 |
-| S291 | Bạn khóa cửa trước khi cả nhà đi ngủ nhé. | Câu dài 10 |
-| S292 | Tôi muốn gọi video cho người thân tối nay. | Câu dài 10 |
-| S293 | Mẹ nấu món này rất ngon, tôi muốn ăn thêm. | Câu dài 10 |
-| S294 | Tôi cần nhờ anh đưa tôi đi khám. | Câu dài 10 |
-| S295 | Bạn giúp tôi tìm cái ví màu đen. | Câu dài 10 |
-| S296 | Tôi muốn sắp xếp lại góc làm việc trong phòng. | Câu dài 10 |
-| S297 | Nhà hôm nay hơi bừa, mình dọn từng chút nhé. | Câu dài 10 |
-| S298 | Tôi nghe tiếng chuông cửa, bạn ra xem giúp. | Câu dài 10 |
-| S299 | Đèn phòng ngủ hơi sáng, bạn giảm xuống nhé. | Câu dài 10 |
-| S300 | Tôi muốn cả nhà ăn cơm cùng nhau tối nay. | Câu dài 10 |
+| S281 | Gọi mẹ giúp tôi nói chuyện. | Câu dài 09 |
+| S282 | Tôi muốn về nhà sớm. | Câu dài 09 |
+| S283 | Ba ở đâu, kiểm tra giúp. | Câu dài 09 |
+| S284 | Tôi vào phòng lấy áo khoác. | Câu dài 09 |
+| S285 | Mở tivi nhỏ thôi nhé. | Câu dài 09 |
+| S286 | Tắt tivi vì phòng hơi ồn. | Câu dài 09 |
+| S287 | Dọn bàn sau khi ăn xong. | Câu dài 09 |
+| S288 | Tôi muốn ra ban công ngồi. | Câu dài 09 |
+| S289 | Kiểm tra máy giặt xong chưa. | Câu dài 09 |
+| S290 | Tôi cần lấy chìa khóa. | Câu dài 09 |
+| S291 | Khóa cửa trước khi đi ngủ. | Câu dài 10 |
+| S292 | Tôi muốn gọi video tối nay. | Câu dài 10 |
+| S293 | Món này ngon, tôi ăn thêm. | Câu dài 10 |
+| S294 | Nhờ anh đưa tôi đi khám. | Câu dài 10 |
+| S295 | Tìm giúp tôi ví màu đen. | Câu dài 10 |
+| S296 | Tôi muốn sắp xếp góc làm. | Câu dài 10 |
+| S297 | Nhà hơi bừa, dọn từng chút. | Câu dài 10 |
+| S298 | Có chuông cửa, ra xem giúp. | Câu dài 10 |
+| S299 | Đèn phòng ngủ hơi sáng. | Câu dài 10 |
+| S300 | Tôi muốn cả nhà ăn cơm. | Câu dài 10 |
 
 ### LONG6. Câu dài - công việc
 
 | ID | Câu mẫu | Pack thu âm |
 | --- | --- | --- |
-| S301 | Tôi cần gửi báo cáo trước mười giờ sáng. | Câu dài 11 |
-| S302 | Bạn mở giúp tôi tài liệu cuộc họp hôm nay. | Câu dài 11 |
-| S303 | Tôi muốn xin nghỉ nửa ngày vào thứ sáu. | Câu dài 11 |
-| S304 | Làm ơn kiểm tra lại lịch họp của tôi. | Câu dài 11 |
-| S305 | Tôi cần thêm thời gian để hoàn thành việc này. | Câu dài 11 |
-| S306 | Bạn chia sẻ màn hình để tôi xem nội dung. | Câu dài 11 |
-| S307 | Tôi vừa cập nhật tiến độ dự án xong. | Câu dài 11 |
-| S308 | Chúng ta nên ưu tiên việc quan trọng trước. | Câu dài 11 |
-| S309 | Tôi sẽ trả lời email này sau cuộc họp. | Câu dài 11 |
-| S310 | Máy tính của tôi đang chạy chậm hơn bình thường. | Câu dài 11 |
-| S311 | Bạn giúp tôi ghi chú lại ý chính nhé. | Câu dài 12 |
-| S312 | Tôi muốn gọi khách hàng vào đầu giờ chiều. | Câu dài 12 |
-| S313 | Bản trình bày này cần sửa thêm vài chỗ. | Câu dài 12 |
-| S314 | Tôi đã nộp bài đúng hạn cho nhóm. | Câu dài 12 |
-| S315 | Nếu mạng yếu, mình chuyển sang gọi điện thoại. | Câu dài 12 |
-| S316 | Tôi cần kiểm tra lại số liệu trước khi gửi. | Câu dài 12 |
-| S317 | Cuộc họp hôm nay kéo dài hơn dự kiến. | Câu dài 12 |
-| S318 | Tôi muốn làm việc yên tĩnh trong một giờ. | Câu dài 12 |
-| S319 | Bạn nhắc tôi gửi email xác nhận tối nay. | Câu dài 12 |
-| S320 | Chúng ta chốt phương án này rồi triển khai. | Câu dài 12 |
+| S301 | Tôi cần gửi báo cáo sáng nay. | Câu dài 11 |
+| S302 | Mở giúp tôi tài liệu họp. | Câu dài 11 |
+| S303 | Tôi muốn xin nghỉ nửa ngày. | Câu dài 11 |
+| S304 | Kiểm tra lại lịch họp tôi. | Câu dài 11 |
+| S305 | Tôi cần thêm thời gian. | Câu dài 11 |
+| S306 | Chia sẻ màn hình giúp tôi. | Câu dài 11 |
+| S307 | Tôi vừa cập nhật tiến độ. | Câu dài 11 |
+| S308 | Ưu tiên việc quan trọng trước. | Câu dài 11 |
+| S309 | Tôi trả lời email sau họp. | Câu dài 11 |
+| S310 | Máy tính của tôi chạy chậm. | Câu dài 11 |
+| S311 | Ghi chú lại ý chính nhé. | Câu dài 12 |
+| S312 | Tôi muốn gọi khách hàng. | Câu dài 12 |
+| S313 | Bản trình bày cần sửa thêm. | Câu dài 12 |
+| S314 | Tôi đã nộp bài đúng hạn. | Câu dài 12 |
+| S315 | Mạng yếu thì gọi điện thoại. | Câu dài 12 |
+| S316 | Tôi cần kiểm tra số liệu. | Câu dài 12 |
+| S317 | Cuộc họp kéo dài hơn dự kiến. | Câu dài 12 |
+| S318 | Tôi muốn làm việc yên tĩnh. | Câu dài 12 |
+| S319 | Nhắc tôi gửi email xác nhận. | Câu dài 12 |
+| S320 | Chúng ta chốt phương án này. | Câu dài 12 |
 
 ### LONG7. Câu dài - công nghệ
 
 | ID | Câu mẫu | Pack thu âm |
 | --- | --- | --- |
-| S321 | Mở ứng dụng ghi âm giúp tôi ngay bây giờ. | Câu dài 13 |
-| S322 | Tăng âm lượng lên một chút để tôi nghe rõ. | Câu dài 13 |
-| S323 | Giảm âm lượng xuống vì âm thanh hơi lớn. | Câu dài 13 |
-| S324 | Phát lại câu vừa rồi để tôi kiểm tra. | Câu dài 13 |
-| S325 | Xóa nội dung tôi vừa nói và bắt đầu lại. | Câu dài 13 |
-| S326 | Lưu đoạn ghi âm này vào thư mục hôm nay. | Câu dài 13 |
-| S327 | Chuyển sang câu tiếp theo trong danh sách. | Câu dài 13 |
-| S328 | Quay lại mục trước để tôi thu âm lại. | Câu dài 13 |
-| S329 | Bật bluetooth để kết nối với tai nghe. | Câu dài 13 |
-| S330 | Tắt nhạc khi tôi bắt đầu nói câu mới. | Câu dài 13 |
-| S331 | Mở camera trước để tôi chụp một tấm ảnh. | Câu dài 14 |
-| S332 | Kiểm tra pin điện thoại giúp tôi một chút. | Câu dài 14 |
-| S333 | Tải lại trang này nếu màn hình bị treo. | Câu dài 14 |
-| S334 | Tìm file ghi âm gần nhất cho tôi. | Câu dài 14 |
-| S335 | Tôi không đăng nhập được vào tài khoản. | Câu dài 14 |
-| S336 | Mật khẩu của tôi có vẻ không chính xác. | Câu dài 14 |
-| S337 | Ứng dụng đang bị treo, hãy thử mở lại. | Câu dài 14 |
-| S338 | Kết nối mạng hôm nay yếu hơn bình thường. | Câu dài 14 |
-| S339 | Micro của tôi không hoạt động ổn định. | Câu dài 14 |
-| S340 | Tôi muốn gửi phản hồi cho bộ phận hỗ trợ. | Câu dài 14 |
+| S321 | Mở ứng dụng ghi âm giúp tôi. | Câu dài 13 |
+| S322 | Tăng âm lượng để nghe rõ. | Câu dài 13 |
+| S323 | Giảm âm lượng xuống một chút. | Câu dài 13 |
+| S324 | Phát lại câu vừa rồi. | Câu dài 13 |
+| S325 | Xóa nội dung tôi vừa nói. | Câu dài 13 |
+| S326 | Lưu đoạn ghi âm này. | Câu dài 13 |
+| S327 | Chuyển sang câu tiếp theo. | Câu dài 13 |
+| S328 | Quay lại mục trước giúp tôi. | Câu dài 13 |
+| S329 | Bật bluetooth kết nối tai nghe. | Câu dài 13 |
+| S330 | Tắt nhạc khi tôi nói. | Câu dài 13 |
+| S331 | Mở camera trước giúp tôi. | Câu dài 14 |
+| S332 | Kiểm tra pin điện thoại. | Câu dài 14 |
+| S333 | Tải lại trang bị treo. | Câu dài 14 |
+| S334 | Tìm file ghi âm gần nhất. | Câu dài 14 |
+| S335 | Tôi không đăng nhập được. | Câu dài 14 |
+| S336 | Mật khẩu có vẻ không đúng. | Câu dài 14 |
+| S337 | Ứng dụng treo, mở lại. | Câu dài 14 |
+| S338 | Kết nối mạng hôm nay yếu. | Câu dài 14 |
+| S339 | Micro không hoạt động ổn định. | Câu dài 14 |
+| S340 | Tôi muốn gửi phản hồi. | Câu dài 14 |
 
 ### LONG8. Câu dài - di chuyển
 
 | ID | Câu mẫu | Pack thu âm |
 | --- | --- | --- |
-| S341 | Tôi muốn đi đến trung tâm thành phố. | Câu dài 15 |
-| S342 | Bạn chỉ đường giúp tôi đến bệnh viện gần nhất. | Câu dài 15 |
-| S343 | Đi thẳng thêm khoảng hai trăm mét nữa. | Câu dài 15 |
-| S344 | Rẽ trái ở ngã tư phía trước nhé. | Câu dài 15 |
-| S345 | Cho tôi xuống ở trạm xe tiếp theo. | Câu dài 15 |
-| S346 | Tôi đang chờ xe trước cửa nhà. | Câu dài 15 |
-| S347 | Chuyến xe này có đi qua sân bay không. | Câu dài 15 |
-| S348 | Tôi cần đặt một chuyến xe công nghệ. | Câu dài 15 |
-| S349 | Từ đây đến công ty mất bao lâu. | Câu dài 15 |
-| S350 | Hôm nay đường đông hơn bình thường. | Câu dài 15 |
-| S351 | Tôi muốn chọn tuyến đường nhanh nhất. | Câu dài 16 |
-| S352 | Bãi đỗ xe nằm ở tầng hầm phải không. | Câu dài 16 |
-| S353 | Tôi quên mang theo vé xe buýt. | Câu dài 16 |
-| S354 | Giúp tôi kiểm tra giờ khởi hành của chuyến xe. | Câu dài 16 |
-| S355 | Tôi sẽ tới nơi trong mười phút nữa. | Câu dài 16 |
-| S356 | Đường về nhà tối nay khá vắng. | Câu dài 16 |
-| S357 | Tôi muốn xuống ở gần công viên. | Câu dài 16 |
-| S358 | Chúng ta đi bộ thêm một đoạn ngắn nhé. | Câu dài 16 |
-| S359 | Tôi đang đứng trước cửa hàng tiện lợi. | Câu dài 16 |
-| S360 | Xe của tôi đang gần hết xăng. | Câu dài 16 |
+| S341 | Tôi muốn đến trung tâm. | Câu dài 15 |
+| S342 | Chỉ đường đến bệnh viện gần nhất. | Câu dài 15 |
+| S343 | Đi thẳng thêm hai trăm mét. | Câu dài 15 |
+| S344 | Rẽ trái ở ngã tư trước. | Câu dài 15 |
+| S345 | Cho tôi xuống trạm tiếp theo. | Câu dài 15 |
+| S346 | Tôi chờ xe trước cửa nhà. | Câu dài 15 |
+| S347 | Xe này có qua sân bay không. | Câu dài 15 |
+| S348 | Tôi cần đặt xe công nghệ. | Câu dài 15 |
+| S349 | Đến công ty mất bao lâu. | Câu dài 15 |
+| S350 | Hôm nay đường đông hơn. | Câu dài 15 |
+| S351 | Tôi muốn tuyến đường nhanh nhất. | Câu dài 16 |
+| S352 | Bãi đỗ ở tầng hầm phải không. | Câu dài 16 |
+| S353 | Tôi quên mang vé xe buýt. | Câu dài 16 |
+| S354 | Kiểm tra giờ khởi hành giúp tôi. | Câu dài 16 |
+| S355 | Tôi tới nơi trong mười phút. | Câu dài 16 |
+| S356 | Đường về nhà tối nay vắng. | Câu dài 16 |
+| S357 | Tôi muốn xuống gần công viên. | Câu dài 16 |
+| S358 | Chúng ta đi bộ thêm chút. | Câu dài 16 |
+| S359 | Tôi đứng trước cửa hàng tiện lợi. | Câu dài 16 |
+| S360 | Xe của tôi gần hết xăng. | Câu dài 16 |
 
 ### LONG9. Câu dài - cảm xúc
 
 | ID | Câu mẫu | Pack thu âm |
 | --- | --- | --- |
-| S361 | Hôm nay tôi cảm thấy vui hơn hôm qua. | Câu dài 17 |
-| S362 | Tôi hơi lo lắng về cuộc hẹn chiều nay. | Câu dài 17 |
-| S363 | Bạn nói chuyện nhẹ nhàng để tôi bình tĩnh lại. | Câu dài 17 |
-| S364 | Tôi muốn ở một mình trong vài phút. | Câu dài 17 |
-| S365 | Không gian này hơi ồn nên tôi thấy khó chịu. | Câu dài 17 |
-| S366 | Tôi đang căng thẳng và cần hít thở sâu. | Câu dài 17 |
-| S367 | Tôi rất biết ơn vì bạn đã giúp tôi. | Câu dài 17 |
-| S368 | Tôi cảm thấy tự tin hơn khi luyện mỗi ngày. | Câu dài 17 |
-| S369 | Bài tập này làm tôi thấy thoải mái hơn. | Câu dài 17 |
-| S370 | Tôi không thích cách nói quá nhanh. | Câu dài 17 |
-| S371 | Tôi muốn bắt đầu từ những câu quen thuộc. | Câu dài 18 |
-| S372 | Kết quả hiển thị rõ ràng làm tôi yên tâm. | Câu dài 18 |
-| S373 | Tôi cần một ngày thật nhẹ nhàng hôm nay. | Câu dài 18 |
-| S374 | Tôi thấy hơi bối rối khi có quá nhiều lựa chọn. | Câu dài 18 |
-| S375 | Bạn đừng vội, tôi cần thêm thời gian. | Câu dài 18 |
-| S376 | Tôi vui vì hệ thống hiểu giọng của tôi hơn. | Câu dài 18 |
-| S377 | Tôi hơi buồn nhưng vẫn muốn luyện tiếp. | Câu dài 18 |
-| S378 | Tâm trạng hôm nay của tôi khá ổn. | Câu dài 18 |
-| S379 | Tôi muốn giữ tinh thần tích cực mỗi ngày. | Câu dài 18 |
-| S380 | Cảm ơn bạn đã lắng nghe tôi chậm rãi. | Câu dài 18 |
+| S361 | Hôm nay tôi cảm thấy vui. | Câu dài 17 |
+| S362 | Tôi hơi lo cuộc hẹn chiều. | Câu dài 17 |
+| S363 | Nói nhẹ nhàng để tôi bình tĩnh. | Câu dài 17 |
+| S364 | Tôi muốn ở một mình. | Câu dài 17 |
+| S365 | Không gian ồn làm tôi khó chịu. | Câu dài 17 |
+| S366 | Tôi căng thẳng, cần hít thở. | Câu dài 17 |
+| S367 | Tôi biết ơn bạn đã giúp. | Câu dài 17 |
+| S368 | Tôi tự tin hơn mỗi ngày. | Câu dài 17 |
+| S369 | Bài tập này làm tôi thoải mái. | Câu dài 17 |
+| S370 | Tôi không thích nói quá nhanh. | Câu dài 17 |
+| S371 | Tôi muốn bắt đầu từ câu quen. | Câu dài 18 |
+| S372 | Kết quả rõ làm tôi yên tâm. | Câu dài 18 |
+| S373 | Tôi cần một ngày nhẹ nhàng. | Câu dài 18 |
+| S374 | Tôi hơi bối rối hôm nay. | Câu dài 18 |
+| S375 | Đừng vội, tôi cần thêm thời gian. | Câu dài 18 |
+| S376 | Tôi vui vì app hiểu hơn. | Câu dài 18 |
+| S377 | Tôi hơi buồn nhưng muốn luyện. | Câu dài 18 |
+| S378 | Tâm trạng hôm nay khá ổn. | Câu dài 18 |
+| S379 | Tôi muốn giữ tinh thần tích cực. | Câu dài 18 |
+| S380 | Cảm ơn bạn đã lắng nghe. | Câu dài 18 |
 
 ### LONG10. Câu dài - khẩn cấp
 
 | ID | Câu mẫu | Pack thu âm |
 | --- | --- | --- |
-| S381 | Tôi đang khó thở, hãy gọi cấp cứu ngay. | Câu dài 19 |
-| S382 | Tôi bị ngã và không thể đứng dậy được. | Câu dài 19 |
-| S383 | Gọi người nhà giúp tôi càng sớm càng tốt. | Câu dài 19 |
-| S384 | Tôi đau nhiều hơn, cần kiểm tra ngay bây giờ. | Câu dài 19 |
-| S385 | Bạn ở lại đây với tôi thêm một chút. | Câu dài 19 |
-| S386 | Mở cửa ngay để người bên ngoài vào giúp. | Câu dài 19 |
-| S387 | Đưa điện thoại cho tôi để gọi người thân. | Câu dài 19 |
-| S388 | Làm ơn lấy thuốc khẩn cấp trong túi nhỏ. | Câu dài 19 |
-| S389 | Tôi không nói rõ được, hãy nhìn ký hiệu của tôi. | Câu dài 19 |
-| S390 | Nếu tôi lịm đi, hãy gọi bác sĩ ngay lập tức. | Câu dài 19 |
-| S391 | Tôi cần được đưa đến bệnh viện gần nhất. | Câu dài 20 |
-| S392 | Đừng để tôi ở một mình trong lúc này. | Câu dài 20 |
-| S393 | Bật chuông báo để mọi người nghe thấy. | Câu dài 20 |
-| S394 | Kiểm tra xem tôi còn thở đều không. | Câu dài 20 |
-| S395 | Tôi đang rất hoảng, hãy nói chậm với tôi. | Câu dài 20 |
-| S396 | Có vật cản dưới chân, hãy dọn ra giúp tôi. | Câu dài 20 |
-| S397 | Tôi cần xe lăn ngay cạnh giường. | Câu dài 20 |
-| S398 | Đừng nâng tôi lên quá nhanh, tôi đang chóng mặt. | Câu dài 20 |
-| S399 | Hãy gọi cấp cứu nếu cơn đau không giảm. | Câu dài 20 |
-| S400 | Mọi người bình tĩnh và làm từng bước nhé. | Câu dài 20 |
+| S381 | Tôi khó thở, gọi cấp cứu. | Câu dài 19 |
+| S382 | Tôi bị ngã, không đứng được. | Câu dài 19 |
+| S383 | Gọi người nhà giúp tôi ngay. | Câu dài 19 |
+| S384 | Tôi đau hơn, cần kiểm tra. | Câu dài 19 |
+| S385 | Ở lại đây với tôi. | Câu dài 19 |
+| S386 | Mở cửa ngay để vào giúp. | Câu dài 19 |
+| S387 | Đưa điện thoại để gọi người thân. | Câu dài 19 |
+| S388 | Lấy thuốc khẩn cấp trong túi. | Câu dài 19 |
+| S389 | Tôi không nói rõ được. | Câu dài 19 |
+| S390 | Tôi lịm đi thì gọi bác sĩ. | Câu dài 19 |
+| S391 | Đưa tôi đến bệnh viện gần nhất. | Câu dài 20 |
+| S392 | Đừng để tôi ở một mình. | Câu dài 20 |
+| S393 | Bật chuông báo cho mọi người. | Câu dài 20 |
+| S394 | Kiểm tra tôi còn thở đều. | Câu dài 20 |
+| S395 | Tôi hoảng, hãy nói chậm. | Câu dài 20 |
+| S396 | Dọn vật cản dưới chân. | Câu dài 20 |
+| S397 | Tôi cần xe lăn cạnh giường. | Câu dài 20 |
+| S398 | Đừng nâng tôi quá nhanh. | Câu dài 20 |
+| S399 | Gọi cấp cứu nếu đau không giảm. | Câu dài 20 |
+| S400 | Mọi người bình tĩnh từng bước. | Câu dài 20 |
 
