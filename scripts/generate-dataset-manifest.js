@@ -26,7 +26,7 @@ function loadSentenceCorpus() {
     }
   }
 
-  const source = fs.readFileSync(filePath, "utf8");
+  const source = fs.readFileSync(sampleSentencesPath, "utf8");
   const sandbox = { window: {} };
   vm.runInNewContext(source, sandbox, { filename: "sample-sentences.js" });
 
