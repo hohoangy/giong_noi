@@ -13,7 +13,8 @@ const CONFIRMED_LEARNED_TAKES = new Set(["review-correct", "review-confirmed"]);
 const CONFIRMED_LEARNED_MIN_SCORE = 0.68;
 const CONFIRMED_LEARNED_BOOST_FLOOR = 0.91;
 const CONFIRMED_LEARNED_BOOST_MAX = 0.98;
-const CONFIRMED_LEARNED_EVIDENCE_TARGET = 4;
+const CONFIRMED_LEARNED_EVIDENCE_TARGET = 5;
+const TRUSTED_LEARNED_CORRECT_COUNT = 5;
 const SPECTRAL_SAMPLE_RATE = 16000;
 const SPECTRAL_FRAME_SIZE = 400;
 const SPECTRAL_HOP_SIZE = 160;
@@ -54,8 +55,16 @@ function applyTrustToScore(score, template) {
   const trustScore = Math.max(0, Math.min(Number(trust.trustScore || 0.5), 1));
   const evidence = Number(trust.correctCount || 0) + Number(trust.wrongCount || 0);
   const evidenceWeight = Math.min(evidence / 8, 1);
+  const isTrusted =
+    Number(trust.correctCount || 0) >= TRUSTED_LEARNED_CORRECT_COUNT &&
+    Number(trust.wrongCount || 0) <= 1;
+  const isUnstable =
+    Number(trust.wrongCount || 0) >= 2 &&
+    Number(trust.wrongCount || 0) >= Number(trust.correctCount || 0);
   const adjustment = (trustScore - 0.5) * 0.18 * evidenceWeight;
-  return Math.max(0, Math.min(score + adjustment, 1));
+  const promotionBoost = isTrusted ? 0.035 : 0;
+  const unstablePenalty = isUnstable ? 0.18 : 0;
+  return Math.max(0, Math.min(score + adjustment + promotionBoost - unstablePenalty, 1));
 }
 
 function getAudioContext() {
@@ -181,7 +190,64 @@ function extractFrameFeatures(samples, frameCount) {
 
   return {
     envelope: normalizeVector(envelope),
-    zeroCrossing: normalizeVector(zeroCrossing)
+    zeroCrossing: normalizeVector(zeroCrossing),
+    rawEnvelope: envelope,
+    rawZeroCrossing: zeroCrossing
+  };
+}
+
+function extractTemporalVoiceStats(samples, sampleRate, frameFeatures) {
+  const rawEnvelope = frameFeatures.rawEnvelope || [];
+  const rawZeroCrossing = frameFeatures.rawZeroCrossing || [];
+  const rmsMean =
+    rawEnvelope.reduce((sum, value) => sum + value, 0) / Math.max(rawEnvelope.length, 1);
+  const zcrMean =
+    rawZeroCrossing.reduce((sum, value) => sum + value, 0) /
+    Math.max(rawZeroCrossing.length, 1);
+  const speechThreshold = Math.max(rmsMean * 0.58, 0.018);
+  const speechFrames = rawEnvelope.map((value) => value >= speechThreshold);
+  const speechFrameCount = speechFrames.filter(Boolean).length;
+  const frameDuration = samples.length / sampleRate / Math.max(rawEnvelope.length, 1);
+  let syllableLikePeaks = 0;
+  let previousWasPeak = false;
+  const pausePattern = [];
+  let currentPause = 0;
+
+  for (let index = 1; index < rawEnvelope.length - 1; index += 1) {
+    const isPeak =
+      rawEnvelope[index] > speechThreshold &&
+      rawEnvelope[index] >= rawEnvelope[index - 1] &&
+      rawEnvelope[index] >= rawEnvelope[index + 1];
+
+    if (isPeak && !previousWasPeak) {
+      syllableLikePeaks += 1;
+    }
+
+    previousWasPeak = isPeak;
+  }
+
+  for (const isSpeech of speechFrames) {
+    if (isSpeech) {
+      if (currentPause > 0) {
+        pausePattern.push(currentPause * frameDuration);
+        currentPause = 0;
+      }
+    } else {
+      currentPause += 1;
+    }
+  }
+
+  if (currentPause > 0) {
+    pausePattern.push(currentPause * frameDuration);
+  }
+
+  return {
+    rmsMean,
+    zcrMean,
+    speakingRate: syllableLikePeaks / Math.max(samples.length / sampleRate, 0.001),
+    speechRatio: speechFrameCount / Math.max(rawEnvelope.length, 1),
+    energyVector: rawEnvelope,
+    pausePattern: limitFrameCount(pausePattern, 16)
   };
 }
 
@@ -255,9 +321,16 @@ async function extractVoiceFeatures(blob) {
   const monoSamples = trimSilence(getMonoSamples(audioBuffer));
   const samples = normalizeSamples(monoSamples.length ? monoSamples : getMonoSamples(audioBuffer));
   const frameFeatures = extractFrameFeatures(samples, VOICE_FEATURE_SIZE);
+  const temporalStats = extractTemporalVoiceStats(samples, audioBuffer.sampleRate, frameFeatures);
 
   return {
     duration: samples.length / audioBuffer.sampleRate,
+    rmsMean: temporalStats.rmsMean,
+    zcr: temporalStats.zcrMean,
+    speakingRate: temporalStats.speakingRate,
+    speechRatio: temporalStats.speechRatio,
+    energyVector: temporalStats.energyVector,
+    pausePattern: temporalStats.pausePattern,
     envelope: frameFeatures.envelope,
     zeroCrossing: frameFeatures.zeroCrossing,
     spectralFrames: extractSpectralFeatures(samples, audioBuffer.sampleRate)
@@ -343,21 +416,45 @@ function compareVoiceFeatures(inputFeatures, templateFeatures) {
   );
   const envelopeScore = cosineSimilarity(inputFeatures.envelope, templateFeatures.envelope);
   const zcrScore = cosineSimilarity(inputFeatures.zeroCrossing, templateFeatures.zeroCrossing);
+  const energyScore = cosineSimilarity(inputFeatures.energyVector || [], templateFeatures.energyVector || []);
+  const pauseScore = cosineSimilarity(
+    normalizeVector(inputFeatures.pausePattern || []),
+    normalizeVector(templateFeatures.pausePattern || [])
+  );
+  const speakingRateRatio =
+    Math.min(inputFeatures.speakingRate || 0, templateFeatures.speakingRate || 0) /
+    Math.max(inputFeatures.speakingRate || 0, templateFeatures.speakingRate || 0, 0.001);
+  const rmsRatio =
+    Math.min(inputFeatures.rmsMean || 0, templateFeatures.rmsMean || 0) /
+    Math.max(inputFeatures.rmsMean || 0, templateFeatures.rmsMean || 0, 0.001);
   const durationRatio =
     Math.min(inputFeatures.duration, templateFeatures.duration) /
     Math.max(inputFeatures.duration, templateFeatures.duration, 0.001);
 
-  return spectralScore * 0.68 + envelopeScore * 0.14 + zcrScore * 0.04 + durationRatio * 0.14;
+  return (
+    spectralScore * 0.58 +
+    envelopeScore * 0.11 +
+    energyScore * 0.08 +
+    zcrScore * 0.035 +
+    durationRatio * 0.105 +
+    speakingRateRatio * 0.055 +
+    pauseScore * 0.035 +
+    rmsRatio * 0.035
+  );
 }
 
 function compareVoiceFeaturesFast(inputFeatures, templateFeatures) {
   const envelopeScore = cosineSimilarity(inputFeatures.envelope, templateFeatures.envelope);
   const zcrScore = cosineSimilarity(inputFeatures.zeroCrossing, templateFeatures.zeroCrossing);
+  const energyScore = cosineSimilarity(inputFeatures.energyVector || [], templateFeatures.energyVector || []);
+  const speakingRateRatio =
+    Math.min(inputFeatures.speakingRate || 0, templateFeatures.speakingRate || 0) /
+    Math.max(inputFeatures.speakingRate || 0, templateFeatures.speakingRate || 0, 0.001);
   const durationRatio =
     Math.min(inputFeatures.duration, templateFeatures.duration) /
     Math.max(inputFeatures.duration, templateFeatures.duration, 0.001);
 
-  return envelopeScore * 0.55 + durationRatio * 0.35 + zcrScore * 0.1;
+  return envelopeScore * 0.42 + energyScore * 0.2 + durationRatio * 0.25 + zcrScore * 0.06 + speakingRateRatio * 0.07;
 }
 
 function scoreTemplateCandidates(inputFeatures, candidateTemplates) {
@@ -400,11 +497,43 @@ function isConfirmedLearnedTemplate(template) {
   return Boolean(template?.confirmed || CONFIRMED_LEARNED_TAKES.has(template?.take));
 }
 
+function isTrustedLearnedTemplate(template) {
+  const trust = getTemplateTrustRecord(template);
+  if (trust) {
+    return (
+      Number(trust.correctCount || 0) >= TRUSTED_LEARNED_CORRECT_COUNT &&
+      Number(trust.wrongCount || 0) <= 1
+    );
+  }
+
+  return Number(template?.confirmedTakeCount || 0) >= TRUSTED_LEARNED_CORRECT_COUNT;
+}
+
+function isUnstableLearnedTemplate(template) {
+  const trust = getTemplateTrustRecord(template);
+  return Boolean(
+    trust &&
+      Number(trust.wrongCount || 0) >= 2 &&
+      Number(trust.wrongCount || 0) >= Number(trust.correctCount || 0)
+  );
+}
+
 function getConfirmedLearnedConfidence(score, secondBestScore, template, evidence = {}) {
   const margin = Math.max(score - secondBestScore, 0);
   const baseConfidence = Math.min(score + margin * 0.25, 1);
+  const promotedByEvidence =
+    Number(evidence.confirmedTakeCount || 0) >= TRUSTED_LEARNED_CORRECT_COUNT ||
+    isTrustedLearnedTemplate({
+      ...template,
+      confirmedTakeCount: Number(evidence.confirmedTakeCount || 0)
+    });
 
-  if (!isConfirmedLearnedTemplate(template) || score < CONFIRMED_LEARNED_MIN_SCORE) {
+  if (
+    !isConfirmedLearnedTemplate(template) ||
+    !promotedByEvidence ||
+    isUnstableLearnedTemplate(template) ||
+    score < CONFIRMED_LEARNED_MIN_SCORE
+  ) {
     return baseConfidence;
   }
 
@@ -725,6 +854,9 @@ function getTopMatches(scoredTemplates, limit = 5) {
       text: item.template.text,
       score: item.score,
       trustScore: item.trust?.trustScore || null,
+      trusted: Boolean(item.trusted),
+      unstable: Boolean(item.unstable),
+      confirmedTakeCount: item.confirmedTakeCount || 0,
       percent: Math.round(item.score * 100)
     }));
 }
@@ -786,7 +918,10 @@ function getSentenceLevelMatches(scoredTemplates, options = {}) {
       bestTakeScore: bestMatch.score,
       takeCount: sentenceMatches.length,
       confirmedTakeCount: confirmedMatches.length,
-      confirmedAverageScore
+      confirmedAverageScore,
+      trusted: confirmedMatches.length >= TRUSTED_LEARNED_CORRECT_COUNT ||
+        sentenceMatches.some((item) => isTrustedLearnedTemplate(item.template)),
+      unstable: sentenceMatches.some((item) => isUnstableLearnedTemplate(item.template))
     };
   });
 }
@@ -995,6 +1130,8 @@ async function matchVoiceToTemplates(blob, speakerId, options = {}) {
       takeCount: bestScoredSentence.takeCount,
       confirmedTakeCount: bestScoredSentence.confirmedTakeCount,
       confirmedAverageScore: bestScoredSentence.confirmedAverageScore,
+      trusted: Boolean(bestScoredSentence.trusted),
+      unstable: Boolean(bestScoredSentence.unstable),
       secondBestScore
     }
   };
@@ -1031,9 +1168,35 @@ function filterTemplatesByExpectedSentence(templates, options = {}) {
   return templates;
 }
 
+function filterTrustedLearnedAudioTemplates(templates) {
+  const confirmedTemplates = templates.filter(
+    (template) => isConfirmedLearnedTemplate(template) && !isUnstableLearnedTemplate(template)
+  );
+  const confirmedCountByText = new Map();
+
+  for (const template of confirmedTemplates) {
+    const key = normalizeTemplateText(template.text);
+    if (!key) {
+      continue;
+    }
+
+    confirmedCountByText.set(key, (confirmedCountByText.get(key) || 0) + 1);
+  }
+
+  return confirmedTemplates.filter((template) => {
+    const key = normalizeTemplateText(template.text);
+    return (
+      isTrustedLearnedTemplate(template) ||
+      (key && Number(confirmedCountByText.get(key) || 0) >= TRUSTED_LEARNED_CORRECT_COUNT)
+    );
+  });
+}
+
 async function matchLearnedVoiceSamples(blob, speakerId, options = {}) {
   const templates = await loadLearnedVoiceTemplates(speakerId);
-  const candidateTemplates = filterTemplatesByExpectedSentence(templates, options);
+  const candidateTemplates = filterTrustedLearnedAudioTemplates(
+    filterTemplatesByExpectedSentence(templates, options)
+  );
 
   if (!candidateTemplates.length) {
     return {
@@ -1103,6 +1266,8 @@ async function matchLearnedVoiceSamples(blob, speakerId, options = {}) {
       takeCount: bestScoredSentence.takeCount,
       confirmedTakeCount: bestScoredSentence.confirmedTakeCount,
       confirmedAverageScore: bestScoredSentence.confirmedAverageScore,
+      trusted: Boolean(bestScoredSentence.trusted),
+      unstable: Boolean(bestScoredSentence.unstable),
       secondBestScore,
       learned: true,
       confirmed: isConfirmedLearnedTemplate(bestScoredSentence.template)

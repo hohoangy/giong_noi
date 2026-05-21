@@ -97,6 +97,27 @@ npm start
 
 Nếu không có `OPENAI_API_KEY`, app tự fallback về nhận diện local như cũ. Endpoint chỉ gửi text/candidate metadata lên AI, không gửi audio raw.
 
+## Nhận diện giọng cá nhân local-first
+
+Pipeline nhận diện được tách thành 3 tầng:
+
+1. `RAW STT ENGINE`: server local chạy faster-whisper/openai-whisper và chỉ trả transcript thô. Raw STT không được tự dùng để phát lại nếu chưa có correction/prediction đủ tin cậy.
+2. `PERSONAL AI CORRECTION ENGINE`: browser học correction memory từ review đúng, gồm token, bigram và trigram. Memory có `correctCount/wrongCount/confidence`, nên các sửa như `dao -> đào` hoặc cụm quen thuộc chỉ được auto-apply khi đủ bằng chứng.
+3. `PERSONAL AUDIO MATCH ENGINE`: browser dùng Web Audio API để trích embedding nhẹ gồm duration, RMS, zero-crossing, speaking rate, energy vector, pause pattern và spectral frames. Audio mới được so với mẫu đã review đúng; mẫu sai chỉ làm giảm trust.
+
+Review hoạt động theo nguyên tắc chống drift:
+
+- Bấm `Đúng`: tăng trust, học token/cụm nếu confidence đủ, lưu audio embedding đúng.
+- Bấm `Sai`: không học correction/audio trực tiếp, chỉ ghi negative review và giảm trust.
+- Mẫu audio/cụm cá nhân chỉ được promote mạnh khi đúng ít nhất 5 lần và sai không quá 1 lần.
+
+Trong panel review có 2 chế độ:
+
+- `Learning`: học tăng dần từ review đúng.
+- `Stability`: freeze learning, chỉ nhận diện và debug, không ghi thêm memory/audio/trust.
+
+Bật `Debug` trong panel hoặc mở URL với `?debug=1` để xem raw STT, corrected text, correction rules, confidence, audio similarity, trust và source engine.
+
 ## Thu âm dữ liệu giọng cá nhân
 
 Recorder hiện dùng bộ `400 mẫu` gồm `200 câu ngắn` và `200 câu dài`. Mỗi loại được chia thành `20 pack`, mỗi pack có `10 câu` để dễ điều hướng và thu lại.

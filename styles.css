@@ -434,6 +434,33 @@ button:disabled {
   line-height: 1.55;
 }
 
+.learning-mode-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.compact-field {
+  min-width: 180px;
+  margin: 0;
+}
+
+.learning-debug-toggle {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(66, 68, 90, 0.1);
+  color: var(--text-soft);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .record-target-card {
   grid-column: 1;
   margin-top: 0;
