@@ -10,6 +10,7 @@ const maxUploadBytes = 25 * 1024 * 1024;
 const learnedRootDir = path.join(rootDir, "learned");
 const learnedDbPath = path.join(learnedRootDir, "voicecoach.sqlite");
 const maxLearnedServerSamples = 500;
+const openAiModel = process.env.OPENAI_AI_ARBITER_MODEL || "gpt-5.5";
 let learnedDb = null;
 let transcriberWorker = null;
 let transcriberWorkerStartPromise = null;
@@ -653,9 +654,203 @@ async function handleTranscribeRequest(request, response) {
   }
 }
 
+function extractResponseText(payload) {
+  if (typeof payload?.output_text === "string") {
+    return payload.output_text;
+  }
+
+  const chunks = [];
+  for (const output of payload?.output || []) {
+    for (const content of output?.content || []) {
+      if (typeof content?.text === "string") {
+        chunks.push(content.text);
+      }
+    }
+  }
+
+  return chunks.join("\n").trim();
+}
+
+function compactAiArbiterPayload(payload) {
+  const topCandidates = Array.isArray(payload.topCandidates)
+    ? payload.topCandidates.slice(0, 6).map((candidate) => ({
+        text: sanitizeText(candidate.text, 160),
+        sourceId: sanitizeText(candidate.sourceId || candidate.id, 80),
+        score: Number(candidate.score || 0),
+        keywordMatchCount: Number(candidate.keywordMatchCount || 0),
+        keywordMatchWords: Array.isArray(candidate.keywordMatchWords)
+          ? candidate.keywordMatchWords.slice(0, 6).map((word) => sanitizeText(word, 40))
+          : []
+      }))
+    : [];
+  const recentReviews = Array.isArray(payload.recentReviews)
+    ? payload.recentReviews.slice(-12).map((review) => ({
+        heardText: sanitizeText(review.heardText, 160),
+        correctedText: sanitizeText(review.correctedText, 160),
+        isCorrect: Boolean(review.isCorrect),
+        confidence: Number(review.confidence || 0)
+      }))
+    : [];
+  const personalPhrases = Array.isArray(payload.personalPhrases)
+    ? payload.personalPhrases.slice(0, 20).map((record) => ({
+        text: sanitizeText(record.text, 160),
+        correctCount: Number(record.correctCount || 0),
+        wrongCount: Number(record.wrongCount || 0),
+        locked: Boolean(record.locked),
+        lastSource: sanitizeText(record.lastSource, 80)
+      }))
+    : [];
+
+  return {
+    rawStt: sanitizeText(payload.rawStt, 240),
+    appGuess: sanitizeText(payload.appGuess, 240),
+    personalizedText: sanitizeText(payload.personalizedText, 240),
+    confidence: Number(payload.confidence || 0),
+    inputType: sanitizeText(payload.inputType, 60),
+    engineUsed: sanitizeText(payload.engineUsed, 80),
+    usedForPlayback: Boolean(payload.usedForPlayback),
+    topCandidates,
+    appliedPhraseCorrections: Array.isArray(payload.appliedPhraseCorrections)
+      ? payload.appliedPhraseCorrections.slice(0, 6)
+      : [],
+    appliedPersonalCorrections: Array.isArray(payload.appliedPersonalCorrections)
+      ? payload.appliedPersonalCorrections.slice(0, 6)
+      : [],
+    recentReviews,
+    personalPhrases,
+    currentTargetText: sanitizeText(payload.currentTargetText, 160),
+    currentPackTexts: Array.isArray(payload.currentPackTexts)
+      ? payload.currentPackTexts.slice(0, 10).map((text) => sanitizeText(text, 120))
+      : []
+  };
+}
+
+async function callOpenAiArbiter(payload) {
+  if (!process.env.OPENAI_API_KEY) {
+    const error = new Error("OPENAI_API_KEY is not set.");
+    error.statusCode = 503;
+    throw error;
+  }
+
+  if (typeof fetch !== "function") {
+    const error = new Error("This Node.js runtime does not support fetch.");
+    error.statusCode = 503;
+    throw error;
+  }
+
+  const compactPayload = compactAiArbiterPayload(payload);
+  const apiResponse = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: openAiModel,
+      instructions:
+        "You are a Vietnamese personal voice arbiter for a speaker with cerebral palsy/dysarthric speech. " +
+        "Decide whether the app should trust raw STT, a corpus/phrase guess, ask the user, or treat the utterance as a new personal phrase. " +
+        "Prefer raw STT when it is a natural free-speech phrase, greeting, name, or out-of-corpus utterance. " +
+        "Use the personalPhrases records as stronger evidence than generic corpus phrases, especially locked records. " +
+        "Only choose the app guess when it is clearly the intended command, a locked personal phrase, or repeated confirmed phrase. " +
+        "Do not over-correct short Vietnamese phrases into unrelated corpus commands. Return only JSON.",
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: JSON.stringify(compactPayload)
+            }
+          ]
+        }
+      ],
+      text: {
+        format: {
+          type: "json_schema",
+          name: "voice_arbiter_decision",
+          strict: true,
+          schema: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              decision: {
+                type: "string",
+                enum: ["use_raw", "use_guess", "ask_user", "learn_new_phrase"]
+              },
+              finalText: {
+                type: "string"
+              },
+              confidence: {
+                type: "number",
+                minimum: 0,
+                maximum: 1
+              },
+              shouldAutoSpeak: {
+                type: "boolean"
+              },
+              shouldLearn: {
+                type: "boolean"
+              },
+              reason: {
+                type: "string"
+              }
+            },
+            required: [
+              "decision",
+              "finalText",
+              "confidence",
+              "shouldAutoSpeak",
+              "shouldLearn",
+              "reason"
+            ]
+          }
+        }
+      },
+      max_output_tokens: 350
+    })
+  });
+  const result = await apiResponse.json().catch(() => ({}));
+
+  if (!apiResponse.ok) {
+    const error = new Error(result.error?.message || "OpenAI arbiter request failed.");
+    error.statusCode = apiResponse.status;
+    throw error;
+  }
+
+  const text = extractResponseText(result);
+  if (!text) {
+    throw new Error("OpenAI arbiter returned an empty response.");
+  }
+
+  return JSON.parse(text);
+}
+
+async function handleAiArbiterRequest(request, response) {
+  try {
+    const payload = await readJsonRequest(request);
+    const decision = await callOpenAiArbiter(payload);
+    sendJson(response, 200, {
+      ok: true,
+      model: openAiModel,
+      decision
+    });
+  } catch (error) {
+    sendJson(response, error.statusCode || 500, {
+      ok: false,
+      error: error.message || "Unable to run AI arbiter."
+    });
+  }
+}
+
 const server = http.createServer((request, response) => {
   if (request.method === "POST" && request.url.startsWith("/api/transcribe")) {
     handleTranscribeRequest(request, response);
+    return;
+  }
+
+  if (request.method === "POST" && request.url.startsWith("/api/ai-arbiter")) {
+    handleAiArbiterRequest(request, response);
     return;
   }
 

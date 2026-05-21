@@ -77,6 +77,26 @@ npm start
 
 `tiny` nhanh hơn nhưng kém chính xác hơn `base`.
 
+## AI arbiter để giảm học sai
+
+App có thêm endpoint:
+
+```text
+POST /api/ai-arbiter
+```
+
+Sau khi Whisper trả transcript, client gửi `raw STT`, câu app đoán, top candidates và lịch sử review gần đây cho AI để phân xử nên dùng raw, dùng câu đoán, hỏi lại, hoặc học phrase mới. Lớp này giúp giảm lỗi over-correction, ví dụ raw nghe là câu chào/từ mới nhưng phrase engine ép nhầm vào một câu trong corpus.
+
+Cấu hình trước khi chạy server:
+
+```powershell
+$env:OPENAI_API_KEY="sk-..."
+$env:OPENAI_AI_ARBITER_MODEL="gpt-5.5"
+npm start
+```
+
+Nếu không có `OPENAI_API_KEY`, app tự fallback về nhận diện local như cũ. Endpoint chỉ gửi text/candidate metadata lên AI, không gửi audio raw.
+
 ## Thu âm dữ liệu giọng cá nhân
 
 Recorder hiện dùng bộ `400 mẫu` gồm `200 câu ngắn` và `200 câu dài`. Mỗi loại được chia thành `20 pack`, mỗi pack có `10 câu` để dễ điều hướng và thu lại.

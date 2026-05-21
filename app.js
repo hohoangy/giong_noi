@@ -20,12 +20,13 @@ const LOCAL_RECOGNITION_AUTO_STOP_MS = 120000;
 const LOCAL_RECOGNITION_SILENCE_STOP_MS = 15000;
 const LOCAL_RECOGNITION_MIN_RECORDING_MS = 450;
 const LOCAL_RECOGNITION_CHUNK_MS = 200;
-const LOCAL_RECOGNITION_SILENCE_RMS = 0.018;
-const LOCAL_RECOGNITION_SPEECH_RMS = 0.026;
-const LOCAL_RECOGNITION_NOISE_SAMPLE_MS = 450;
-const LOCAL_RECOGNITION_SPEECH_NOISE_RATIO = 2.2;
-const LOCAL_RECOGNITION_MIN_SPEECH_MS = 260;
-const LOCAL_RECOGNITION_MIN_PEAK_RMS = 0.024;
+const LOCAL_RECOGNITION_SILENCE_RMS = 0.01;
+const LOCAL_RECOGNITION_SPEECH_RMS = 0.014;
+const LOCAL_RECOGNITION_NOISE_SAMPLE_MS = 250;
+const LOCAL_RECOGNITION_SPEECH_NOISE_RATIO = 1.6;
+const LOCAL_RECOGNITION_MIN_SPEECH_MS = 120;
+const LOCAL_RECOGNITION_MIN_PEAK_RMS = 0.012;
+const LOCAL_RECOGNITION_MIN_AUDIO_BYTES = 1400;
 const SAMPLE_ENTRIES = Array.isArray(window.MONTH2_CORPUS)
   ? window.MONTH2_CORPUS.map((entry, index) => ({
       id: entry.id || `S${String(index + 1).padStart(3, "0")}`,
@@ -78,6 +79,11 @@ const VOICE_TEMPLATE_CORRECTION_SCORE = 0.68;
 const FAST_AUDIO_ACCEPT_SCORE = 0.74;
 const FAST_AUDIO_STABLE_ACCEPT_SCORE = 0.82;
 const LOCKED_LEARNED_AUDIO_SCORE = 0.9;
+const AUDIO_MATCH_MIN_MARGIN = 0.06;
+const AUDIO_MATCH_LOCKED_MIN_MARGIN = 0.03;
+const TEXT_MATCH_MIN_MARGIN = 0.07;
+const AI_ARBITER_TIMEOUT_MS = 4500;
+const AI_ARBITER_MIN_AUTOSPEAK_CONFIDENCE = 0.78;
 const FAST_AUDIO_WAIT_MS = 900;
 const LEARNED_AUDIO_FAST_WAIT_MS = 220;
 const LEARNED_AUDIO_BORDERLINE_WAIT_MS = 480;
@@ -91,10 +97,14 @@ const SPEECH_CORRECTIONS_STORAGE_KEY = "speech_corrections.json";
 const SPEECH_REVIEWS_STORAGE_KEY = "voicecoach_speech_reviews";
 const SPEECH_CONTEXT_STORAGE_KEY = "voicecoach_context_memory";
 const SPEECH_TRUST_STORAGE_KEY = "voicecoach_sample_trust";
+const PERSONAL_PHRASEBOOK_STORAGE_KEY = "voicecoach_personal_phrasebook";
 const RECORDER_STORAGE_KEY = "voiceCoachDatasetRecorder";
 const CONTEXT_MEMORY_MAX_ITEMS = 40;
 const CONTEXT_RECENT_LIMIT = 8;
 const CONTEXT_PHRASE_BOOST_MAX = 0.12;
+const PERSONAL_PHRASE_LOCK_COUNT = 3;
+const PERSONAL_PHRASE_FAST_LEARN_COUNT = 2;
+const PERSONAL_PHRASE_MAX_ITEMS = 300;
 const TRUST_CORRECT_BOOST = 0.08;
 const TRUST_WRONG_PENALTY = 0.14;
 const TRUST_DEFAULT_SCORE = 0.5;
@@ -187,6 +197,81 @@ function loadContextMemory() {
     topics: typeof parsed.topics === "object" && parsed.topics ? parsed.topics : {},
     updatedAt: parsed.updatedAt || ""
   };
+}
+
+function loadPersonalPhrasebook() {
+  const parsed = readLocalJson(PERSONAL_PHRASEBOOK_STORAGE_KEY, {});
+  return parsed && typeof parsed === "object" ? parsed : {};
+}
+
+function savePersonalPhrasebook(phrasebook) {
+  const entries = Object.entries(phrasebook || {})
+    .filter(([, record]) => record?.text)
+    .sort((left, right) => {
+      const leftScore =
+        Number(left[1].correctCount || 0) * 2 -
+        Number(left[1].wrongCount || 0) * 3 +
+        (left[1].locked ? 10 : 0);
+      const rightScore =
+        Number(right[1].correctCount || 0) * 2 -
+        Number(right[1].wrongCount || 0) * 3 +
+        (right[1].locked ? 10 : 0);
+      return rightScore - leftScore;
+    })
+    .slice(0, PERSONAL_PHRASE_MAX_ITEMS);
+
+  writeLocalJson(PERSONAL_PHRASEBOOK_STORAGE_KEY, Object.fromEntries(entries));
+}
+
+function updatePersonalPhrasebook(text, options = {}) {
+  const normalized = normalizeText(text);
+  const displayText = normalizeDisplayText(text);
+
+  if (!normalized || !displayText) {
+    return null;
+  }
+
+  const phrasebook = loadPersonalPhrasebook();
+  const existing = phrasebook[normalized] || {
+    text: displayText,
+    normalized,
+    correctCount: 0,
+    wrongCount: 0,
+    locked: false,
+    createdAt: new Date().toISOString()
+  };
+
+  existing.text = displayText;
+  existing.correctCount =
+    Number(existing.correctCount || 0) + Number(options.correctCount || 0);
+  existing.wrongCount =
+    Number(existing.wrongCount || 0) + Number(options.wrongCount || 0);
+  existing.lastSource = options.source || existing.lastSource || "review";
+  existing.updatedAt = new Date().toISOString();
+
+  if (options.locked || existing.correctCount >= PERSONAL_PHRASE_LOCK_COUNT) {
+    existing.locked = true;
+  }
+
+  if (existing.wrongCount >= 2 && existing.wrongCount >= existing.correctCount) {
+    existing.locked = false;
+  }
+
+  phrasebook[normalized] = existing;
+  savePersonalPhrasebook(phrasebook);
+  return existing;
+}
+
+function getPersonalPhrasebookRecords() {
+  return Object.values(loadPersonalPhrasebook())
+    .filter((record) => record?.text && Number(record.correctCount || 0) > Number(record.wrongCount || 0))
+    .sort((left, right) => {
+      if (Boolean(right.locked) !== Boolean(left.locked)) {
+        return Number(Boolean(right.locked)) - Number(Boolean(left.locked));
+      }
+
+      return Number(right.correctCount || 0) - Number(left.correctCount || 0);
+    });
 }
 
 function saveContextMemory(memory) {
@@ -590,10 +675,27 @@ function getReviewHeardText() {
 }
 
 function getReviewCorrectedText() {
+  const heardText = getReviewHeardText();
+
+  if (matchedSentence?.confirmedByUser) {
+    return (
+      matchedSentence.correctedText ||
+      lastRecognitionResult?.correctedTranscript ||
+      finalTranscript ||
+      heardText ||
+      ""
+    ).trim();
+  }
+
+  if (!matchedSentence?.usedForPlayback && heardText) {
+    return heardText;
+  }
+
   return (
     matchedSentence?.correctedText ||
     lastRecognitionResult?.correctedTranscript ||
     finalTranscript ||
+    heardText ||
     ""
   ).trim();
 }
@@ -756,7 +858,13 @@ function renderLearningReviewPanel(message = "") {
   reviewPanelElements.wrongButton.disabled = !hasReviewTarget;
   reviewPanelElements.status.textContent =
     message ||
-    `Review status: ${hasReviewTarget ? "chờ đánh dấu đúng/sai" : "chưa có kết quả để review"}.`;
+    `Review status: ${
+      hasReviewTarget
+        ? matchedSentence?.usedForPlayback
+          ? "chờ đánh dấu câu app phát đúng/sai"
+          : "chờ review raw STT; bấm Đúng nếu App nghe đúng"
+        : "chưa có kết quả để review"
+    }.`;
   renderPipelineDebugPanel();
 }
 
@@ -922,7 +1030,8 @@ async function handleUncertainConfirmation(textValue) {
     personalizedCorrectedText: confirmedText,
     lightlyCorrectedText: confirmedText,
     confidence: Math.max(matchedSentence?.confidence || 0, ASK_CONFIRMATION_SCORE),
-    confirmedByUser: true
+    confirmedByUser: true,
+    usedForPlayback: true
   };
   renderTranscript(recognizedTranscript || confirmedText, "final");
   renderMatchedSentence(matchedSentence, true);
@@ -931,6 +1040,11 @@ async function handleUncertainConfirmation(textValue) {
   if (heardText && normalizeText(heardText) !== normalizeText(confirmedText)) {
     learnFromReview(heardText, confirmedText);
   }
+  updatePersonalPhrasebook(confirmedText, {
+    correctCount: 1,
+    locked: Boolean(matchedSentence?.aiDecision?.decision === "learn_new_phrase"),
+    source: "review-confirmed"
+  });
   updateContextMemory(confirmedText, "review-confirmed");
   updateSampleTrustFromReview(true);
 
@@ -1019,6 +1133,7 @@ async function resetAllPersonalLearning(options = {}) {
   window.localStorage.removeItem(SPEECH_REVIEWS_STORAGE_KEY);
   window.localStorage.removeItem(SPEECH_CONTEXT_STORAGE_KEY);
   window.localStorage.removeItem(SPEECH_TRUST_STORAGE_KEY);
+  window.localStorage.removeItem(PERSONAL_PHRASEBOOK_STORAGE_KEY);
   window.localStorage.removeItem(RECORDER_STORAGE_KEY);
   window.voiceTemplateMatcher?.setSampleTrustStore?.({});
 
@@ -1061,14 +1176,27 @@ async function handleCorrectReview() {
     isCorrect: true,
     createdAt: new Date().toISOString()
   });
-  markAppliedCorrectionsSuccessful(
+  const appliedPersonalCorrections =
     matchedSentence?.appliedPersonalCorrections ||
-      lastRecognitionResult?.appliedPersonalCorrections ||
-      []
-  );
+    lastRecognitionResult?.appliedPersonalCorrections ||
+    [];
+  const acceptedGuessedCorrection =
+    Boolean(matchedSentence?.usedForPlayback) ||
+    normalizeText(heardText) !== normalizeText(correctedText);
+
+  if (acceptedGuessedCorrection) {
+    markAppliedCorrectionsSuccessful(appliedPersonalCorrections);
+  } else {
+    markAppliedCorrectionsWrong(appliedPersonalCorrections);
+  }
   const trust = updateSampleTrustFromReview(true);
 
   if (correctedText) {
+    updatePersonalPhrasebook(correctedText, {
+      correctCount: 1,
+      locked: Boolean(acceptedGuessedCorrection && matchedSentence?.aiDecision?.shouldLearn),
+      source: acceptedGuessedCorrection ? "review-correct" : "raw-review-correct"
+    });
     updateContextMemory(correctedText, "review-correct");
     finalTranscript = correctedText;
     if (matchedSentence) {
@@ -1077,7 +1205,8 @@ async function handleCorrectReview() {
         correctedText,
         personalizedCorrectedText: correctedText,
         lightlyCorrectedText: correctedText,
-        confirmedByUser: true
+        confirmedByUser: true,
+        usedForPlayback: true
       };
     }
     notifyRecognitionResult();
@@ -1148,6 +1277,17 @@ async function handleWrongReview(correctedTextValue) {
       []
   );
   learnFromReview(heardText, correctedText);
+  updatePersonalPhrasebook(correctedText, {
+    correctCount: 1,
+    locked: Boolean(matchedSentence?.aiDecision?.shouldLearn),
+    source: "review-wrong-correction"
+  });
+  if (normalizeText(heardText) !== normalizeText(correctedText)) {
+    updatePersonalPhrasebook(heardText, {
+      wrongCount: 1,
+      source: "review-wrong-heard"
+    });
+  }
   reviewPanelElements.correctionInput.hidden = true;
   reviewPanelElements.saveWrongButton.hidden = true;
 
@@ -1771,8 +1911,32 @@ function getShortPhraseCandidates() {
     }
   }
 
+  for (const record of getPersonalPhrasebookRecords()) {
+    const correctCount = Number(record.correctCount || 0);
+    const wrongCount = Number(record.wrongCount || 0);
+    if (!record.locked && correctCount < PERSONAL_PHRASE_FAST_LEARN_COUNT) {
+      continue;
+    }
+
+    addCandidate(record.text, {
+      priority: record.locked ? 7 : 6,
+      source: record.locked ? "locked personal phrase" : "personal phrasebook"
+    });
+  }
+
+  const phraseStats = getShortPhraseLearningStats();
   for (const review of loadReviews()) {
     if (review?.correctedText) {
+      const normalizedReviewText = normalizeText(review.correctedText);
+      const stats = phraseStats.get(normalizedReviewText);
+      const hasEnoughEvidence =
+        Number(stats?.reviewCorrectCount || 0) >= PERSONAL_PHRASE_FAST_LEARN_COUNT ||
+        Number(stats?.correctionMemoryCount || 0) >= PERSONAL_PHRASE_FAST_LEARN_COUNT;
+
+      if (!hasEnoughEvidence) {
+        continue;
+      }
+
       addCandidate(review.correctedText, {
         priority: review.isCorrect ? 4 : 3,
         source: review.isCorrect ? "review memory" : "correction memory"
@@ -1904,7 +2068,13 @@ function runShortPhraseEngine(inputText, options = {}) {
     .sort((left, right) => right.score - left.score)
     .slice(0, 5);
   const personalizedText = hybridCorrection.correctedPhraseOutput || inputText;
-  const accepted = bestMatch && bestMatch.confidence >= SHORT_PHRASE_ACCEPT_CONFIDENCE;
+  const secondBestScore = topCandidates[1]?.score || 0;
+  const matchMargin = Math.max((topCandidates[0]?.score || 0) - secondBestScore, 0);
+  const accepted =
+    bestMatch &&
+    bestMatch.confidence >= SHORT_PHRASE_ACCEPT_CONFIDENCE &&
+    (matchMargin >= TEXT_MATCH_MIN_MARGIN ||
+      normalizedTextForMatching === bestMatch.candidate.normalizedText);
   const correctedText = accepted ? bestMatch.candidate.text : personalizedText;
 
   return {
@@ -1934,7 +2104,8 @@ function runShortPhraseEngine(inputText, options = {}) {
           id: bestMatch.candidate.id,
           sourceId: bestMatch.candidate.sourceId || bestMatch.candidate.id,
           rawScore: bestMatch.rawScore,
-          secondBestScore: topCandidates[1]?.score || 0,
+          secondBestScore,
+          matchMargin,
           keywordMatchCount: topCandidates[0]?.keywordMatchCount || 0,
           keywordMatchWords: topCandidates[0]?.keywordMatchWords || [],
           topCandidates
@@ -2825,9 +2996,27 @@ function hasLocalRecognitionSpeech(blob) {
     return true;
   }
 
-  return (
+  const averageRms =
+    localRecognitionAudioStats.totalRms / Math.max(localRecognitionAudioStats.frameCount, 1);
+  const noiseFloor =
+    localRecognitionAudioStats.noiseFrameCount > 0
+      ? localRecognitionAudioStats.noiseTotalRms / localRecognitionAudioStats.noiseFrameCount
+      : 0;
+  const dynamicPeakThreshold = Math.max(
+    LOCAL_RECOGNITION_MIN_PEAK_RMS,
+    noiseFloor * LOCAL_RECOGNITION_SPEECH_NOISE_RATIO
+  );
+  const hasClearSpeech =
     localRecognitionAudioStats.maxRms >= LOCAL_RECOGNITION_MIN_PEAK_RMS &&
-    localRecognitionAudioStats.speechMs >= LOCAL_RECOGNITION_MIN_SPEECH_MS
+    localRecognitionAudioStats.speechMs >= LOCAL_RECOGNITION_MIN_SPEECH_MS;
+  const hasShortSpeech =
+    blob.size >= LOCAL_RECOGNITION_MIN_AUDIO_BYTES &&
+    localRecognitionAudioStats.maxRms >= dynamicPeakThreshold &&
+    averageRms >= noiseFloor * 1.12;
+
+  return (
+    hasClearSpeech ||
+    hasShortSpeech
   );
 }
 
@@ -2926,6 +3115,176 @@ function timeoutAfter(ms, fallbackValue = null) {
   });
 }
 
+function getCurrentPackTextsForAiArbiter() {
+  const allowedIds = new Set(window.voiceRecorderControls?.getCurrentPackSentenceIds?.() || []);
+
+  if (!allowedIds.size) {
+    return [];
+  }
+
+  return SAMPLE_ENTRIES
+    .filter((entry) => allowedIds.has(entry.id) || allowedIds.has(entry.sourceId))
+    .map((entry) => entry.text)
+    .slice(0, 10);
+}
+
+function buildAiArbiterPayload(matchResult) {
+  const currentTarget = getCurrentTargetEntryForLocalRecognition();
+
+  return {
+    rawStt: matchResult.transcript || matchResult.rawText || "",
+    appGuess: matchResult.correctedText || "",
+    personalizedText: matchResult.personalizedCorrectedText || "",
+    confidence: matchResult.confidence || 0,
+    inputType: matchResult.inputType || "",
+    engineUsed: matchResult.engineUsed || matchResult.engine || "",
+    usedForPlayback: Boolean(matchResult.usedForPlayback),
+    topCandidates: matchResult.topCandidates || matchResult.match?.topCandidates || [],
+    appliedPhraseCorrections: matchResult.appliedPhraseCorrections || [],
+    appliedPersonalCorrections: matchResult.appliedPersonalCorrections || [],
+    recentReviews: loadReviews().slice(-12),
+    personalPhrases: getPersonalPhrasebookRecords().slice(0, 20),
+    currentTargetText: currentTarget?.text || "",
+    currentPackTexts: getCurrentPackTextsForAiArbiter()
+  };
+}
+
+async function requestAiArbiterDecision(matchResult) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), AI_ARBITER_TIMEOUT_MS);
+
+  try {
+    const response = await fetch("/api/ai-arbiter", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(buildAiArbiterPayload(matchResult)),
+      signal: controller.signal
+    });
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok || !payload?.decision) {
+      return null;
+    }
+
+    return payload.decision;
+  } catch (error) {
+    console.warn("AI arbiter unavailable:", error.message);
+    return null;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+function applyAiArbiterDecision(matchResult, decision) {
+  if (!decision?.finalText) {
+    return matchResult;
+  }
+
+  const finalText = normalizeDisplayText(decision.finalText);
+  if (!finalText) {
+    return matchResult;
+  }
+
+  const confidence = Math.max(
+    Number(matchResult.confidence || 0),
+    Number(decision.confidence || 0)
+  );
+  const commonFields = {
+    ...matchResult,
+    aiDecision: decision,
+    aiArbitrated: true,
+    aiReason: decision.reason || "",
+    correctedText: finalText,
+    personalizedCorrectedText: finalText,
+    confidence,
+    engineUsed: `${matchResult.engineUsed || matchResult.engine || "recognition"} + AI arbiter`,
+    learningSources: Array.from(new Set([...(matchResult.learningSources || []), "AI arbiter"]))
+  };
+
+  if (decision.decision === "use_raw" || decision.decision === "learn_new_phrase") {
+    return {
+      ...commonFields,
+      isFreeSpeech: true,
+      inputType: "free_speech",
+      appliedPhraseCorrections: [],
+      appliedPersonalCorrections: [],
+      usedForPlayback:
+        Boolean(decision.shouldAutoSpeak) &&
+        confidence >= AI_ARBITER_MIN_AUTOSPEAK_CONFIDENCE
+    };
+  }
+
+  if (decision.decision === "ask_user") {
+    return {
+      ...commonFields,
+      confidence: Math.min(confidence, ASK_CONFIRMATION_SCORE - 0.01),
+      isConfirmed: false,
+      usedForPlayback: false
+    };
+  }
+
+  return {
+    ...commonFields,
+    usedForPlayback:
+      Boolean(decision.shouldAutoSpeak) &&
+      confidence >= AI_ARBITER_MIN_AUTOSPEAK_CONFIDENCE
+  };
+}
+
+async function applyAiArbiter(matchResult) {
+  if (!matchResult?.transcript) {
+    return matchResult;
+  }
+
+  const decision = await requestAiArbiterDecision(matchResult);
+  return decision ? applyAiArbiterDecision(matchResult, decision) : matchResult;
+}
+
+function getAudioMatchMargin(matchResult) {
+  const rawScore = Number(
+    matchResult?.match?.rawConfidence ??
+      matchResult?.match?.rawScore ??
+      matchResult?.topMatches?.[0]?.score ??
+      0
+  );
+  const secondBestScore = Number(
+    matchResult?.match?.secondBestScore ??
+      matchResult?.topMatches?.[1]?.score ??
+      0
+  );
+
+  return Math.max(rawScore - secondBestScore, 0);
+}
+
+function isAudioMatchStable(matchResult, options = {}) {
+  if (!matchResult?.correctedText) {
+    return false;
+  }
+
+  const margin = getAudioMatchMargin(matchResult);
+  const requiredMargin = options.locked
+    ? AUDIO_MATCH_LOCKED_MIN_MARGIN
+    : AUDIO_MATCH_MIN_MARGIN;
+
+  return margin >= requiredMargin;
+}
+
+function getTextMatchMargin(matchResult) {
+  const rawScore = Number(matchResult?.match?.rawConfidence ?? matchResult?.confidence ?? 0);
+  const secondBestScore = Number(matchResult?.match?.secondBestScore ?? 0);
+  return Math.max(rawScore - secondBestScore, 0);
+}
+
+function isTextMatchStable(matchResult) {
+  if (!matchResult?.match) {
+    return true;
+  }
+
+  return getTextMatchMargin(matchResult) >= TEXT_MATCH_MIN_MARGIN;
+}
+
 function finishLocalRecognition(matchResult) {
   if (!matchResult?.correctedText) {
     recognizedTranscript = "";
@@ -2943,19 +3302,35 @@ function finishLocalRecognition(matchResult) {
   const correctedTokenCount = normalizeVietnameseText(matchResult.correctedText || "")
     .split(/\s+/)
     .filter(Boolean).length;
-  const canUseShortPhrasePlayback =
-    (matchResult.engine === "audio-template" ||
-      matchResult.source === "learned-audio" ||
-      matchResult.inputType === "short_phrase") &&
+  const canUseLockedLearnedPhrasePlayback =
+    matchResult.source === "learned-audio" &&
     correctedTokenCount > 0 &&
     correctedTokenCount <= SHORT_PHRASE_MAX_WORDS &&
-    matchResult.confidence >=
-      (matchResult.inputType === "short_phrase" ? SHORT_PHRASE_AUTO_CONFIDENCE : FAST_AUDIO_ACCEPT_SCORE);
+    matchResult.confidence >= LOCKED_LEARNED_AUDIO_SCORE &&
+    isAudioMatchStable(matchResult, { locked: true });
+  const canUseShortPhrasePlayback =
+    canUseLockedLearnedPhrasePlayback ||
+    ((matchResult.engine === "audio-template" ||
+        matchResult.source === "learned-audio" ||
+        matchResult.inputType === "short_phrase") &&
+      correctedTokenCount > 0 &&
+      correctedTokenCount <= SHORT_PHRASE_MAX_WORDS &&
+      (matchResult.source === "local-stt" ||
+        (matchResult.engine !== "audio-template" && matchResult.source !== "learned-audio") ||
+        isAudioMatchStable(matchResult)) &&
+      isTextMatchStable(matchResult) &&
+      matchResult.confidence >=
+        (matchResult.inputType === "short_phrase" ? SHORT_PHRASE_AUTO_CONFIDENCE : FAST_AUDIO_ACCEPT_SCORE));
   const canUseFreeSpeechPlayback =
     matchResult.source === "local-stt" &&
     matchResult.isFreeSpeech &&
     isLongEnoughForSentenceGuess(normalizeVietnameseText(matchResult.correctedText || ""));
+  const canUseAiArbiterPlayback =
+    matchResult.aiArbitrated &&
+    matchResult.usedForPlayback &&
+    matchResult.confidence >= AI_ARBITER_MIN_AUTOSPEAK_CONFIDENCE;
   const canUseCorrectionForPlayback =
+    canUseAiArbiterPlayback ||
     canUseShortPhrasePlayback ||
     (matchResult.confidence >= ASK_CONFIRMATION_SCORE &&
       (isLongEnoughForSentenceGuess(normalizeVietnameseText(matchResult.correctedText || "")) ||
@@ -3001,6 +3376,7 @@ function finishLocalRecognition(matchResult) {
     learningSources: matchResult.learningSources || [],
     match: matchResult.match || null,
     timing: matchResult.timing || null,
+    usedForPlayback: canUseCorrectionForPlayback,
     debugText: `${matchResult.topMatches?.length
       ? `Đang so ${matchResult.scoredTemplateCount || matchResult.candidateCount || 0}/${
           matchResult.candidateCount || 0
@@ -3013,7 +3389,7 @@ function finishLocalRecognition(matchResult) {
           }`
       : matchResult.source === "learned-audio"
         ? `Mẫu học từ các lần đánh dấu sai: ${matchResult.templateCount || 0} mẫu.`
-      : ""}${formatRecognitionTiming(matchResult.timing)}`
+      : ""}${matchResult.aiArbitrated ? ` AI arbiter: ${matchResult.aiReason || "đã phân xử raw/guess"}.` : ""}${formatRecognitionTiming(matchResult.timing)}`
   };
 
   if (matchResult.topMatches?.length) {
@@ -3077,9 +3453,13 @@ function buildMatchResultFromTranscript(transcriptionResult) {
     trackCorrectionUsage: true
   });
   const canUseShortPhrase =
-    match.inputType === "short_phrase" && match.confidence >= SHORT_PHRASE_AUTO_CONFIDENCE;
+    match.inputType === "short_phrase" &&
+    match.confidence >= SHORT_PHRASE_AUTO_CONFIDENCE &&
+    isTextMatchStable(match);
   const canUseSentence =
-    match.inputType === "sentence" && match.confidence >= AUTO_CORRECTION_SCORE;
+    match.inputType === "sentence" &&
+    match.confidence >= AUTO_CORRECTION_SCORE &&
+    isTextMatchStable(match);
   const personalizedText = match.lightlyCorrectedText || transcript;
   const transcriptIsLongEnough = isLongEnoughForSentenceGuess(normalizeVietnameseText(personalizedText));
   const canUseFreeSpeech =
@@ -3236,7 +3616,10 @@ async function processLocalRecognitionBlob(blob) {
     timeoutAfter(FAST_AUDIO_WAIT_MS)
   ]);
 
-  if (fastAudioMatch?.confidence >= LOCKED_LEARNED_AUDIO_SCORE) {
+  if (
+    fastAudioMatch?.confidence >= LOCKED_LEARNED_AUDIO_SCORE &&
+    isAudioMatchStable(fastAudioMatch, { locked: true })
+  ) {
     fastAudioMatch.transcript = fastAudioMatch.correctedText;
     fastAudioMatch.engine = "audio-template";
     fastAudioMatch.model = "cached-local";
@@ -3248,21 +3631,30 @@ async function processLocalRecognitionBlob(blob) {
     timeoutAfter(LEARNED_AUDIO_FAST_WAIT_MS)
   ]);
 
-  if (earlyLearnedAudioMatch?.confidence >= LOCKED_LEARNED_AUDIO_SCORE) {
+  if (
+    earlyLearnedAudioMatch?.confidence >= LOCKED_LEARNED_AUDIO_SCORE &&
+    isAudioMatchStable(earlyLearnedAudioMatch, { locked: true })
+  ) {
     earlyLearnedAudioMatch.transcript = earlyLearnedAudioMatch.correctedText;
     earlyLearnedAudioMatch.engine = "learned-audio";
     earlyLearnedAudioMatch.model = "confirmed-local";
     return attachTiming(earlyLearnedAudioMatch);
   }
 
-  if (fastAudioMatch?.confidence >= FAST_AUDIO_STABLE_ACCEPT_SCORE) {
+  if (
+    fastAudioMatch?.confidence >= FAST_AUDIO_STABLE_ACCEPT_SCORE &&
+    isAudioMatchStable(fastAudioMatch)
+  ) {
     fastAudioMatch.transcript = fastAudioMatch.correctedText;
     fastAudioMatch.engine = "audio-template";
     fastAudioMatch.model = "cached-local";
     return attachTiming(fastAudioMatch);
   }
 
-  if (fastAudioMatch?.confidence >= FAST_AUDIO_ACCEPT_SCORE) {
+  if (
+    fastAudioMatch?.confidence >= FAST_AUDIO_ACCEPT_SCORE &&
+    isAudioMatchStable(fastAudioMatch)
+  ) {
     const borderlineLearnedAudioMatch =
       earlyLearnedAudioMatch ||
       (await Promise.race([
@@ -3270,7 +3662,10 @@ async function processLocalRecognitionBlob(blob) {
         timeoutAfter(LEARNED_AUDIO_BORDERLINE_WAIT_MS)
       ]));
 
-    if (borderlineLearnedAudioMatch?.confidence >= LOCKED_LEARNED_AUDIO_SCORE) {
+    if (
+      borderlineLearnedAudioMatch?.confidence >= LOCKED_LEARNED_AUDIO_SCORE &&
+      isAudioMatchStable(borderlineLearnedAudioMatch, { locked: true })
+    ) {
       borderlineLearnedAudioMatch.transcript = borderlineLearnedAudioMatch.correctedText;
       borderlineLearnedAudioMatch.engine = "learned-audio";
       borderlineLearnedAudioMatch.model = "confirmed-local";
@@ -3284,7 +3679,9 @@ async function processLocalRecognitionBlob(blob) {
   }
 
   try {
-    const sttMatchResult = buildMatchResultFromTranscript(await transcribeAudioWithLocalServer(blob));
+    const sttMatchResult = await applyAiArbiter(
+      buildMatchResultFromTranscript(await transcribeAudioWithLocalServer(blob))
+    );
 
     if (sttMatchResult.confidence >= AUTO_CORRECTION_SCORE) {
       return attachTiming(sttMatchResult);
@@ -3308,6 +3705,7 @@ async function processLocalRecognitionBlob(blob) {
       if (
         bestLearnedMatch &&
         bestLearnedMatch.confidence > sttMatchResult.confidence &&
+        isAudioMatchStable(bestLearnedMatch) &&
         (transcriptIsLongEnough ||
           bestLearnedMatch.confidence >= SHORT_TRANSCRIPT_AUDIO_CORRECTION_SCORE)
       ) {
@@ -3334,6 +3732,7 @@ async function processLocalRecognitionBlob(blob) {
       const canUseAudioMatch =
         bestAudioMatch &&
         bestAudioMatch.confidence > sttMatchResult.confidence &&
+        isAudioMatchStable(bestAudioMatch) &&
         (transcriptIsLongEnough ||
           bestAudioMatch.confidence >= SHORT_TRANSCRIPT_AUDIO_CORRECTION_SCORE);
 
@@ -3360,7 +3759,7 @@ async function processLocalRecognitionBlob(blob) {
   }
 
   const learnedAudioMatch = (await learnedAudioMatchPromise) || earlyLearnedAudioMatch;
-  if (learnedAudioMatch) {
+  if (learnedAudioMatch && isAudioMatchStable(learnedAudioMatch)) {
     return attachTiming(learnedAudioMatch);
   }
 
@@ -3376,7 +3775,11 @@ async function processLocalRecognitionBlob(blob) {
     ...(fallbackMatch.timing || {}),
     audioMatchMs: performance.now() - fallbackStartedAt
   };
-  return attachTiming(fallbackMatch);
+  if (isAudioMatchStable(fallbackMatch)) {
+    return attachTiming(fallbackMatch);
+  }
+
+  throw new Error("Audio gần giống nhiều mẫu khác nhau, app chưa đủ chắc để tự chọn câu.");
 }
 
 async function startLocalRecognition() {
