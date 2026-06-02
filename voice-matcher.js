@@ -21,6 +21,11 @@ const SPECTRAL_HOP_SIZE = 160;
 const SPECTRAL_BANDS = [
   140, 190, 260, 350, 470, 640, 860, 1160, 1560, 2100, 2830, 3800, 5100
 ];
+const CEPSTRAL_BANDS = [
+  120, 160, 210, 270, 350, 450, 580, 740, 940, 1190, 1510, 1910,
+  2420, 3060, 3870, 4900
+];
+const CEPSTRAL_COEFFICIENTS = 10;
 const MAX_SPECTRAL_FRAMES = 90;
 let SAMPLE_TRUST_STORE = {};
 
@@ -61,9 +66,9 @@ function applyTrustToScore(score, template) {
   const isUnstable =
     Number(trust.wrongCount || 0) >= 2 &&
     Number(trust.wrongCount || 0) >= Number(trust.correctCount || 0);
-  const adjustment = (trustScore - 0.5) * 0.18 * evidenceWeight;
-  const promotionBoost = isTrusted ? 0.035 : 0;
-  const unstablePenalty = isUnstable ? 0.18 : 0;
+  const adjustment = (trustScore - 0.5) * 0.24 * evidenceWeight;
+  const promotionBoost = isTrusted ? 0.065 : 0;
+  const unstablePenalty = isUnstable ? 0.24 : 0;
   return Math.max(0, Math.min(score + adjustment + promotionBoost - unstablePenalty, 1));
 }
 
@@ -316,6 +321,62 @@ function extractSpectralFeatures(samples, sampleRate) {
   return limitFrameCount(frames, MAX_SPECTRAL_FRAMES);
 }
 
+function getLogBandMagnitudes(samples, start, frequencies, sampleRate) {
+  return frequencies.map((frequency) =>
+    Math.log1p(getGoertzelMagnitude(samples, start, frequency, sampleRate))
+  );
+}
+
+function dctCoefficients(values, coefficientCount) {
+  const output = [];
+  const length = Math.max(values.length, 1);
+
+  for (let coefficientIndex = 0; coefficientIndex < coefficientCount; coefficientIndex += 1) {
+    let sum = 0;
+
+    for (let valueIndex = 0; valueIndex < values.length; valueIndex += 1) {
+      sum +=
+        values[valueIndex] *
+        Math.cos((Math.PI / length) * (valueIndex + 0.5) * coefficientIndex);
+    }
+
+    output.push(sum / Math.sqrt(length));
+  }
+
+  return output;
+}
+
+function extractCepstralFeatures(samples, sampleRate) {
+  const resampledSamples = resampleSamples(samples, sampleRate, SPECTRAL_SAMPLE_RATE);
+  const frames = [];
+
+  if (resampledSamples.length < SPECTRAL_FRAME_SIZE) {
+    const bands = getLogBandMagnitudes(
+      resampledSamples,
+      0,
+      CEPSTRAL_BANDS,
+      SPECTRAL_SAMPLE_RATE
+    );
+    return [normalizeFeatureFrame(dctCoefficients(bands, CEPSTRAL_COEFFICIENTS))];
+  }
+
+  for (
+    let start = 0;
+    start <= resampledSamples.length - SPECTRAL_FRAME_SIZE;
+    start += SPECTRAL_HOP_SIZE
+  ) {
+    const bands = getLogBandMagnitudes(
+      resampledSamples,
+      start,
+      CEPSTRAL_BANDS,
+      SPECTRAL_SAMPLE_RATE
+    );
+    frames.push(normalizeFeatureFrame(dctCoefficients(bands, CEPSTRAL_COEFFICIENTS)));
+  }
+
+  return limitFrameCount(frames, MAX_SPECTRAL_FRAMES);
+}
+
 async function extractVoiceFeatures(blob) {
   const audioBuffer = await decodeAudioBlob(blob);
   const monoSamples = trimSilence(getMonoSamples(audioBuffer));
@@ -333,6 +394,7 @@ async function extractVoiceFeatures(blob) {
     pausePattern: temporalStats.pausePattern,
     envelope: frameFeatures.envelope,
     zeroCrossing: frameFeatures.zeroCrossing,
+    cepstralFrames: extractCepstralFeatures(samples, audioBuffer.sampleRate),
     spectralFrames: extractSpectralFeatures(samples, audioBuffer.sampleRate)
   };
 }
@@ -410,6 +472,10 @@ function getDtwSimilarity(leftFrames, rightFrames) {
 }
 
 function compareVoiceFeatures(inputFeatures, templateFeatures) {
+  const cepstralScore = getDtwSimilarity(
+    inputFeatures.cepstralFrames || inputFeatures.spectralFrames || [],
+    templateFeatures.cepstralFrames || templateFeatures.spectralFrames || []
+  );
   const spectralScore = getDtwSimilarity(
     inputFeatures.spectralFrames,
     templateFeatures.spectralFrames
@@ -432,14 +498,15 @@ function compareVoiceFeatures(inputFeatures, templateFeatures) {
     Math.max(inputFeatures.duration, templateFeatures.duration, 0.001);
 
   return (
-    spectralScore * 0.58 +
-    envelopeScore * 0.11 +
-    energyScore * 0.08 +
-    zcrScore * 0.035 +
-    durationRatio * 0.105 +
-    speakingRateRatio * 0.055 +
-    pauseScore * 0.035 +
-    rmsRatio * 0.035
+    cepstralScore * 0.42 +
+    spectralScore * 0.25 +
+    envelopeScore * 0.09 +
+    energyScore * 0.07 +
+    zcrScore * 0.03 +
+    durationRatio * 0.06 +
+    speakingRateRatio * 0.035 +
+    pauseScore * 0.02 +
+    rmsRatio * 0.025
   );
 }
 
@@ -545,8 +612,8 @@ function getConfirmedLearnedConfidence(score, secondBestScore, template, evidenc
   const confirmedAverageScore = Number(evidence.confirmedAverageScore || score);
   const evidenceBoost = Math.min((score - CONFIRMED_LEARNED_MIN_SCORE) * 0.35, 0.07);
   const marginBoost = Math.min(margin * 0.12, 0.03);
-  const countBoost = confirmedEvidenceScore * 0.035;
-  const averageBoost = Math.max(confirmedAverageScore - CONFIRMED_LEARNED_MIN_SCORE, 0) * 0.08;
+  const countBoost = confirmedEvidenceScore * 0.055;
+  const averageBoost = Math.max(confirmedAverageScore - CONFIRMED_LEARNED_MIN_SCORE, 0) * 0.1;
   return Math.min(
     Math.max(
       baseConfidence,
@@ -908,7 +975,7 @@ function getSentenceLevelMatches(scoredTemplates, options = {}) {
     );
     const confirmedScore =
       confirmedMatches.length && confirmedAverageScore >= CONFIRMED_LEARNED_MIN_SCORE
-        ? confirmedAverageScore * 0.86 + confirmedEvidenceScore * 0.14
+        ? confirmedAverageScore * 0.82 + confirmedEvidenceScore * 0.18
         : 0;
     const blendedScore = bestMatch.score * 0.72 + averageTopScore * 0.28;
 
@@ -1192,11 +1259,24 @@ function filterTrustedLearnedAudioTemplates(templates) {
   });
 }
 
+function filterConfirmedLearnedAudioTemplates(templates) {
+  return templates.filter(
+    (template) => isConfirmedLearnedTemplate(template) && !isUnstableLearnedTemplate(template)
+  );
+}
+
 async function matchLearnedVoiceSamples(blob, speakerId, options = {}) {
   const templates = await loadLearnedVoiceTemplates(speakerId);
-  const candidateTemplates = filterTrustedLearnedAudioTemplates(
+  const confirmedCandidateTemplates = filterConfirmedLearnedAudioTemplates(
     filterTemplatesByExpectedSentence(templates, options)
   );
+  const trustedCandidateKeys = new Set(
+    filterTrustedLearnedAudioTemplates(confirmedCandidateTemplates).map(
+      (template) =>
+        `${template.sourceSentenceId || template.sentenceId}:${template.fileName}:${template.createdAt || ""}`
+    )
+  );
+  const candidateTemplates = confirmedCandidateTemplates;
 
   if (!candidateTemplates.length) {
     return {
@@ -1266,7 +1346,13 @@ async function matchLearnedVoiceSamples(blob, speakerId, options = {}) {
       takeCount: bestScoredSentence.takeCount,
       confirmedTakeCount: bestScoredSentence.confirmedTakeCount,
       confirmedAverageScore: bestScoredSentence.confirmedAverageScore,
-      trusted: Boolean(bestScoredSentence.trusted),
+      trusted:
+        Boolean(bestScoredSentence.trusted) ||
+        trustedCandidateKeys.has(
+          `${bestScoredSentence.template.sourceSentenceId || bestScoredSentence.template.sentenceId}:${
+            bestScoredSentence.template.fileName
+          }:${bestScoredSentence.template.createdAt || ""}`
+        ),
       unstable: Boolean(bestScoredSentence.unstable),
       secondBestScore,
       learned: true,

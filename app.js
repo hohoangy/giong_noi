@@ -27,6 +27,7 @@ const LOCAL_RECOGNITION_SPEECH_NOISE_RATIO = 1.6;
 const LOCAL_RECOGNITION_MIN_SPEECH_MS = 120;
 const LOCAL_RECOGNITION_MIN_PEAK_RMS = 0.012;
 const LOCAL_RECOGNITION_MIN_AUDIO_BYTES = 1400;
+const LOCAL_RECOGNITION_AUDIO_BITS_PER_SECOND = 48000;
 const SAMPLE_ENTRIES = Array.isArray(window.MONTH2_CORPUS)
   ? window.MONTH2_CORPUS.map((entry, index) => ({
       id: entry.id || `S${String(index + 1).padStart(3, "0")}`,
@@ -62,6 +63,7 @@ const MIN_CORRECTION_SCORE = 0.45;
 const AUTO_CORRECTION_SCORE = 0.7;
 const ASK_CONFIRMATION_SCORE = 0.82;
 const CORRECTION_AUTO_CONFIDENCE = 0.58;
+const SINGLE_TOKEN_CORRECTION_AUTO_CONFIDENCE = 0.78;
 const CORRECTION_SUGGEST_CONFIDENCE = 0.42;
 const MAX_CORRECTION_NGRAM = 3;
 const MAX_PHRASE_NGRAM = 5;
@@ -69,24 +71,28 @@ const PHRASE_AUTO_CONFIDENCE = 0.68;
 const PHRASE_SUGGEST_CONFIDENCE = 0.5;
 const PHRASE_DATASET_URL = "data/phrases/phrases.json";
 const SHORT_PHRASE_MAX_WORDS = 3;
-const SHORT_PHRASE_AUTO_CONFIDENCE = 0.66;
-const SHORT_PHRASE_ACCEPT_CONFIDENCE = 0.46;
+const SHORT_PHRASE_AUTO_CONFIDENCE = 0.74;
+const SHORT_PHRASE_ACCEPT_CONFIDENCE = 0.52;
 const SHORT_PHRASE_REVIEW_BOOST_PER_COUNT = 0.025;
 const SHORT_PHRASE_MAX_REVIEW_BOOST = 0.18;
 const SHORT_PHRASE_REPEAT_THRESHOLD = 3;
-const LEARNED_AUDIO_CORRECTION_SCORE = 0.68;
+const LEARNED_AUDIO_CORRECTION_SCORE = 0.66;
 const VOICE_TEMPLATE_CORRECTION_SCORE = 0.68;
-const FAST_AUDIO_ACCEPT_SCORE = 0.74;
-const FAST_AUDIO_STABLE_ACCEPT_SCORE = 0.82;
-const LOCKED_LEARNED_AUDIO_SCORE = 0.9;
-const AUDIO_MATCH_MIN_MARGIN = 0.06;
+const FAST_AUDIO_ACCEPT_SCORE = 0.78;
+const FAST_AUDIO_STABLE_ACCEPT_SCORE = 0.86;
+const LOCKED_LEARNED_AUDIO_SCORE = 0.86;
+const AUDIO_MATCH_MIN_MARGIN = 0.08;
 const AUDIO_MATCH_LOCKED_MIN_MARGIN = 0.03;
-const TEXT_MATCH_MIN_MARGIN = 0.07;
-const AI_ARBITER_TIMEOUT_MS = 4500;
-const AI_ARBITER_MIN_AUTOSPEAK_CONFIDENCE = 0.78;
-const FAST_AUDIO_WAIT_MS = 900;
-const LEARNED_AUDIO_FAST_WAIT_MS = 220;
-const LEARNED_AUDIO_BORDERLINE_WAIT_MS = 480;
+const TEXT_MATCH_MIN_MARGIN = 0.1;
+const SHORT_PHRASE_TEXT_MATCH_MIN_MARGIN = 0.14;
+const SHORT_PHRASE_MIN_RAW_SCORE = 0.5;
+const SHORT_PHRASE_MIN_RAW_OVERLAP = 0.5;
+const SENTENCE_TEXT_MATCH_MIN_MARGIN = 0.1;
+const AI_ARBITER_TIMEOUT_MS = 1800;
+const AI_ARBITER_MIN_AUTOSPEAK_CONFIDENCE = 0.82;
+const FAST_AUDIO_WAIT_MS = 450;
+const LEARNED_AUDIO_FAST_WAIT_MS = 160;
+const LEARNED_AUDIO_BORDERLINE_WAIT_MS = 260;
 const FREE_SPEECH_STT_SCORE = 0.72;
 const SHORT_TRANSCRIPT_AUDIO_CORRECTION_SCORE = 0.88;
 const MIN_MATCH_WORD_COUNT = 4;
@@ -99,6 +105,7 @@ const SPEECH_CONTEXT_STORAGE_KEY = "voicecoach_context_memory";
 const SPEECH_TRUST_STORAGE_KEY = "voicecoach_sample_trust";
 const PERSONAL_PHRASEBOOK_STORAGE_KEY = "voicecoach_personal_phrasebook";
 const PERSONAL_LEARNING_MODE_STORAGE_KEY = "voicecoach_learning_mode";
+const PERSONAL_CONFUSION_MEMORY_STORAGE_KEY = "voicecoach_confusion_memory";
 const RECORDER_STORAGE_KEY = "voiceCoachDatasetRecorder";
 const CONTEXT_MEMORY_MAX_ITEMS = 40;
 const CONTEXT_RECENT_LIMIT = 8;
@@ -107,10 +114,16 @@ const PERSONAL_PHRASE_LOCK_COUNT = 3;
 const PERSONAL_PHRASE_FAST_LEARN_COUNT = 2;
 const PERSONAL_PHRASE_PROMOTE_COUNT = 5;
 const PERSONAL_PHRASE_MAX_ITEMS = 300;
+const PERSONAL_CONFUSION_MAX_ITEMS = 220;
+const PERSONAL_CONFUSION_INPUT_SCORE = 0.72;
+const PERSONAL_CONFUSION_EXACT_LOCK_COUNT = 2;
+const PERSONAL_CONFUSION_FUZZY_LOCK_COUNT = 3;
+const PERSONAL_CONFUSION_LOCK_INPUT_SCORE = 0.84;
+const PERSONAL_CONFUSION_LOCK_CONFIDENCE = 0.9;
 const PERSONAL_CORRECTION_MIN_LEARN_CONFIDENCE = 0.62;
-const PERSONAL_AUDIO_MIN_LEARN_CONFIDENCE = 0.68;
-const PERSONAL_AUDIO_PROMOTE_COUNT = 5;
-const TRUST_CORRECT_BOOST = 0.08;
+const PERSONAL_AUDIO_MIN_LEARN_CONFIDENCE = 0.62;
+const PERSONAL_AUDIO_PROMOTE_COUNT = 3;
+const TRUST_CORRECT_BOOST = 0.14;
 const TRUST_WRONG_PENALTY = 0.14;
 const TRUST_DEFAULT_SCORE = 0.5;
 const SAFE_MODE_MIN_AUTO_CONFIDENCE = 0.82;
@@ -203,8 +216,8 @@ function loadPersonalLearningMode() {
   }
 
   return {
-    mode: parsed.mode === "stability" ? "stability" : "learning",
-    debug: Boolean(parsed.debug)
+    mode: "learning",
+    debug: false
   };
 }
 
@@ -219,7 +232,7 @@ function savePersonalLearningMode(settings) {
 }
 
 function isLearningFrozen() {
-  return personalLearningMode.mode === "stability";
+  return false;
 }
 
 function canLearnFromReview(confidence = 0, minimumConfidence = PERSONAL_CORRECTION_MIN_LEARN_CONFIDENCE) {
@@ -243,6 +256,25 @@ function loadContextMemory() {
 function loadPersonalPhrasebook() {
   const parsed = readLocalJson(PERSONAL_PHRASEBOOK_STORAGE_KEY, {});
   return parsed && typeof parsed === "object" ? parsed : {};
+}
+
+function loadConfusionMemory() {
+  const parsed = readLocalJson(PERSONAL_CONFUSION_MEMORY_STORAGE_KEY, { pairs: [] });
+  return Array.isArray(parsed?.pairs) ? parsed : { pairs: [] };
+}
+
+function saveConfusionMemory(memory) {
+  const pairs = Array.isArray(memory?.pairs) ? memory.pairs : [];
+  writeLocalJson(PERSONAL_CONFUSION_MEMORY_STORAGE_KEY, {
+    pairs: pairs
+      .slice()
+      .sort((left, right) => {
+        const leftWeight = Number(left.count || 0) - Number(left.dismissedCount || 0);
+        const rightWeight = Number(right.count || 0) - Number(right.dismissedCount || 0);
+        return rightWeight - leftWeight;
+      })
+      .slice(0, PERSONAL_CONFUSION_MAX_ITEMS)
+  });
 }
 
 function savePersonalPhrasebook(phrasebook) {
@@ -316,6 +348,185 @@ function getPersonalPhrasebookRecords() {
 
       return Number(right.correctCount || 0) - Number(left.correctCount || 0);
     });
+}
+
+function recordPersonalConfusion(heardText, wrongGuessText, correctedText) {
+  const heardNormalized = normalizeText(heardText);
+  const wrongNormalized = normalizeText(wrongGuessText);
+  const correctNormalized = normalizeText(correctedText);
+
+  if (
+    !heardNormalized ||
+    !wrongNormalized ||
+    !correctNormalized ||
+    wrongNormalized === correctNormalized
+  ) {
+    return null;
+  }
+
+  const memory = loadConfusionMemory();
+  const key = `${heardNormalized}=>${wrongNormalized}=>${correctNormalized}`;
+  const existing = memory.pairs.find((item) => item.key === key) || {
+    key,
+    heardText: normalizeDisplayText(heardText),
+    wrongGuessText: normalizeDisplayText(wrongGuessText),
+    correctedText: normalizeDisplayText(correctedText),
+    heardNormalized,
+    wrongNormalized,
+    correctNormalized,
+    count: 0,
+    dismissedCount: 0,
+    createdAt: new Date().toISOString()
+  };
+
+  existing.count = Number(existing.count || 0) + 1;
+  existing.lastSeenAt = new Date().toISOString();
+
+  if (!memory.pairs.includes(existing)) {
+    memory.pairs.push(existing);
+  }
+  saveConfusionMemory(memory);
+
+  return existing;
+}
+
+function getPersonalConfusionAdjustment(inputNormalized, candidateNormalized, pairs = null) {
+  if (!inputNormalized || !candidateNormalized) {
+    return { adjustment: 0, sources: [] };
+  }
+
+  let adjustment = 0;
+  const sources = new Set();
+
+  for (const pair of pairs || loadConfusionMemory().pairs || []) {
+    const evidence = Math.max(Number(pair.count || 0) - Number(pair.dismissedCount || 0), 0);
+    if (!evidence) {
+      continue;
+    }
+
+    const inputScore = getMatchScore(inputNormalized, pair.heardNormalized || "");
+    if (inputScore < PERSONAL_CONFUSION_INPUT_SCORE) {
+      continue;
+    }
+
+    if (candidateNormalized === pair.wrongNormalized) {
+      adjustment -= Math.min(0.42, 0.12 + evidence * 0.06);
+      sources.add("negative confusion memory");
+    }
+
+    if (candidateNormalized === pair.correctNormalized) {
+      adjustment += Math.min(0.24, 0.07 + evidence * 0.04);
+      sources.add("positive confusion memory");
+    }
+  }
+
+  return { adjustment, sources: Array.from(sources) };
+}
+
+function getLockedPersonalConfusionCorrection(inputText, pairs = null) {
+  const inputNormalized = normalizeText(inputText);
+
+  if (!inputNormalized) {
+    return null;
+  }
+
+  let bestPair = null;
+  let bestScore = 0;
+  const considerPair = (pair, evidence) => {
+    if (!pair.correctNormalized) {
+      return;
+    }
+
+    const heardScore = getMatchScore(inputNormalized, pair.heardNormalized || "");
+    const wrongScore = getMatchScore(inputNormalized, pair.wrongNormalized || "");
+    const inputScore = Math.max(heardScore, wrongScore);
+    const exactInputMatch =
+      inputNormalized === pair.heardNormalized || inputNormalized === pair.wrongNormalized;
+    const requiredEvidence = exactInputMatch
+      ? PERSONAL_CONFUSION_EXACT_LOCK_COUNT
+      : PERSONAL_CONFUSION_FUZZY_LOCK_COUNT;
+
+    if (evidence < requiredEvidence) {
+      return;
+    }
+
+    if (
+      inputScore < PERSONAL_CONFUSION_LOCK_INPUT_SCORE &&
+      !exactInputMatch
+    ) {
+      return;
+    }
+
+    const score = inputScore + Math.min(evidence, 8) * 0.04;
+    if (!bestPair || score > bestScore) {
+      bestPair = {
+        ...pair,
+        count: evidence,
+        dismissedCount: 0
+      };
+      bestScore = score;
+    }
+  };
+
+  for (const pair of pairs || loadConfusionMemory().pairs || []) {
+    const evidence = Math.max(Number(pair.count || 0) - Number(pair.dismissedCount || 0), 0);
+    considerPair(pair, evidence);
+  }
+
+  const reviewEvidence = new Map();
+  for (const review of loadReviews()) {
+    const heardNormalized = normalizeText(review?.heardText || "");
+    const wrongGuessNormalized = normalizeText(
+      review?.matchedText || review?.playbackTranscript || review?.heardText || ""
+    );
+    const correctNormalized = normalizeText(review?.correctedText || "");
+
+    if (!heardNormalized || !correctNormalized || heardNormalized === correctNormalized) {
+      continue;
+    }
+
+    const key = `${heardNormalized}=>${wrongGuessNormalized}=>${correctNormalized}`;
+    const existing = reviewEvidence.get(key) || {
+      heardText: normalizeDisplayText(review.heardText),
+      correctedText: normalizeDisplayText(review.correctedText),
+      wrongGuessText: normalizeDisplayText(
+        review.matchedText || review.playbackTranscript || review.heardText
+      ),
+      heardNormalized,
+      wrongNormalized: wrongGuessNormalized || heardNormalized,
+      correctNormalized,
+      count: 0,
+      dismissedCount: 0
+    };
+    existing.count += 1;
+    reviewEvidence.set(key, existing);
+  }
+
+  for (const pair of reviewEvidence.values()) {
+    considerPair(pair, Number(pair.count || 0));
+  }
+
+  if (!bestPair) {
+    return null;
+  }
+
+  const evidence = Math.max(
+    Number(bestPair.count || 0) - Number(bestPair.dismissedCount || 0),
+    0
+  );
+
+  return {
+    correctedText: bestPair.correctedText || normalizeDisplayText(bestPair.correctNormalized),
+    heardText: bestPair.heardText || inputText,
+    wrongGuessText: bestPair.wrongGuessText || "",
+    confidence: Math.min(
+      PERSONAL_CONFUSION_LOCK_CONFIDENCE +
+        Math.min(evidence - PERSONAL_CONFUSION_EXACT_LOCK_COUNT, 5) * 0.02,
+      0.98
+    ),
+    evidence,
+    pair: bestPair
+  };
 }
 
 function saveContextMemory(memory) {
@@ -524,6 +735,13 @@ function getCurrentSpeakerIdForLocalRecognition() {
 }
 
 function getAllowedSentenceIdsForLocalRecognition() {
+  const mode = new URL(window.location.href).searchParams.get("mode");
+  const practiceMode = mode === "practice" || new URL(window.location.href).searchParams.get("practice") === "1";
+
+  if (!practiceMode) {
+    return [];
+  }
+
   return (
     window.voiceRecorderControls?.getCurrentRecognitionSentenceIds?.() ||
     window.voiceRecorderControls?.getCurrentPackSentenceIds?.() ||
@@ -799,50 +1017,6 @@ function createLearningReviewPanel() {
   controls.className = "recorder-control-row";
   controls.style.gap = "8px";
 
-  const modeRow = document.createElement("div");
-  modeRow.className = "learning-mode-row";
-
-  const modeLabel = document.createElement("label");
-  modeLabel.className = "field-group compact-field";
-
-  const modeLabelText = document.createElement("span");
-  modeLabelText.className = "field-label";
-  modeLabelText.textContent = "Chế độ";
-
-  const modeSelect = document.createElement("select");
-  modeSelect.className = "field-input";
-  modeSelect.innerHTML = `
-    <option value="learning">Learning</option>
-    <option value="stability">Stability</option>
-  `;
-  modeSelect.value = personalLearningMode.mode;
-  modeSelect.addEventListener("change", () => {
-    savePersonalLearningMode({
-      ...personalLearningMode,
-      mode: modeSelect.value
-    });
-    renderLearningReviewPanel();
-  });
-  modeLabel.append(modeLabelText, modeSelect);
-
-  const debugLabel = document.createElement("label");
-  debugLabel.className = "learning-debug-toggle";
-
-  const debugInput = document.createElement("input");
-  debugInput.type = "checkbox";
-  debugInput.checked = personalLearningMode.debug;
-  debugInput.addEventListener("change", () => {
-    savePersonalLearningMode({
-      ...personalLearningMode,
-      debug: debugInput.checked
-    });
-  });
-
-  const debugText = document.createElement("span");
-  debugText.textContent = "Debug";
-  debugLabel.append(debugInput, debugText);
-  modeRow.append(modeLabel, debugLabel);
-
   const confirmBox = document.createElement("div");
   confirmBox.className = "uncertain-confirm-panel";
   confirmBox.hidden = true;
@@ -927,7 +1101,7 @@ function createLearningReviewPanel() {
   });
 
   controls.append(correctButton, wrongButton, correctionInput, saveWrongButton);
-  panel.append(modeRow, confirmBox, status, debug, controls);
+  panel.append(confirmBox, status, debug, controls);
   guessMeta.insertAdjacentElement("afterend", panel);
 
   reviewPanelElements = {
@@ -939,8 +1113,6 @@ function createLearningReviewPanel() {
     confirmPrompt,
     confirmOptions,
     confirmInput,
-    modeSelect,
-    debugInput,
     correctButton,
     wrongButton,
     correctionInput,
@@ -954,12 +1126,6 @@ function renderLearningReviewPanel(message = "") {
     createLearningReviewPanel();
   }
 
-  if (reviewPanelElements.modeSelect) {
-    reviewPanelElements.modeSelect.value = personalLearningMode.mode;
-  }
-  if (reviewPanelElements.debugInput) {
-    reviewPanelElements.debugInput.checked = personalLearningMode.debug;
-  }
   renderUncertainConfirmationPanel();
   const heardText = getReviewHeardText();
   const correctedText = getReviewCorrectedText();
@@ -1145,6 +1311,7 @@ async function handleUncertainConfirmation(textValue) {
   }
 
   const heardText = getReviewHeardText();
+  const previousGuessText = matchedSentence?.correctedText || "";
   finalTranscript = confirmedText;
   matchedSentence = {
     ...(matchedSentence || {}),
@@ -1162,7 +1329,20 @@ async function handleUncertainConfirmation(textValue) {
   const confidence = Math.max(matchedSentence?.confidence || 0, ASK_CONFIRMATION_SCORE);
   const shouldLearn = canLearnFromReview(confidence);
 
+  if (shouldLearn) {
+    saveReview({
+      heardText,
+      correctedText: confirmedText,
+      matchedText: previousGuessText,
+      playbackTranscript: finalTranscript,
+      confidence,
+      isCorrect: normalizeText(heardText) === normalizeText(confirmedText),
+      createdAt: new Date().toISOString()
+    });
+  }
+
   if (shouldLearn && heardText && normalizeText(heardText) !== normalizeText(confirmedText)) {
+    recordPersonalConfusion(heardText, previousGuessText, confirmedText);
     learnFromReview(heardText, confirmedText);
   }
   if (shouldLearn) {
@@ -1264,6 +1444,7 @@ async function resetAllPersonalLearning(options = {}) {
   window.localStorage.removeItem(SPEECH_TRUST_STORAGE_KEY);
   window.localStorage.removeItem(PERSONAL_PHRASEBOOK_STORAGE_KEY);
   window.localStorage.removeItem(PERSONAL_LEARNING_MODE_STORAGE_KEY);
+  window.localStorage.removeItem(PERSONAL_CONFUSION_MEMORY_STORAGE_KEY);
   window.localStorage.removeItem(RECORDER_STORAGE_KEY);
   personalLearningMode = { mode: "learning", debug: false };
   window.voiceTemplateMatcher?.setSampleTrustStore?.({});
@@ -1278,8 +1459,92 @@ async function resetAllPersonalLearning(options = {}) {
   return true;
 }
 
+function forgetPersonalLearningText(textValue) {
+  const target = normalizeText(textValue);
+
+  if (!target) {
+    return 0;
+  }
+
+  let removedCount = 0;
+  const matchesTarget = (...values) =>
+    values.some((value) => normalizeText(value || "") === target);
+
+  const beforeCorrections = learnedCorrections.length;
+  learnedCorrections = learnedCorrections.filter(
+    (rule) => !matchesTarget(rule.wrong, rule.correct)
+  );
+  removedCount += beforeCorrections - learnedCorrections.length;
+  saveCorrections();
+
+  const phrasebook = loadPersonalPhrasebook();
+  for (const [key, record] of Object.entries(phrasebook)) {
+    if (normalizeText(key) === target || matchesTarget(record?.text)) {
+      delete phrasebook[key];
+      removedCount += 1;
+    }
+  }
+  savePersonalPhrasebook(phrasebook);
+
+  const reviews = loadReviews();
+  const keptReviews = reviews.filter(
+    (review) =>
+      !matchesTarget(
+        review?.heardText,
+        review?.correctedText,
+        review?.playbackTranscript,
+        review?.matchedText
+      )
+  );
+  removedCount += reviews.length - keptReviews.length;
+  window.localStorage.setItem(SPEECH_REVIEWS_STORAGE_KEY, JSON.stringify(keptReviews, null, 2));
+
+  const confusionMemory = loadConfusionMemory();
+  const keptPairs = (confusionMemory.pairs || []).filter(
+    (pair) =>
+      !matchesTarget(
+        pair?.heardText,
+        pair?.wrongGuessText,
+        pair?.correctedText,
+        pair?.heardNormalized,
+        pair?.wrongNormalized,
+        pair?.correctNormalized
+      )
+  );
+  removedCount += (confusionMemory.pairs || []).length - keptPairs.length;
+  saveConfusionMemory({ pairs: keptPairs });
+
+  const contextMemory = loadContextMemory();
+  for (const key of Object.keys(contextMemory.phrases || {})) {
+    if (normalizeText(key) === target || matchesTarget(contextMemory.phrases[key]?.text)) {
+      delete contextMemory.phrases[key];
+      removedCount += 1;
+    }
+  }
+  saveContextMemory(contextMemory);
+
+  correctionRuleCache = null;
+  phraseDatasetByLength = new Map();
+  phraseDatasetExactMap = new Map();
+  renderLearningReviewPanel(`Review status: đã quên "${normalizeDisplayText(textValue)}" (${removedCount} mục memory).`);
+  return removedCount;
+}
+
 async function resetPersonalLearningFromUrl() {
   const url = new URL(window.location.href);
+  const forgetText = url.searchParams.get("forgetText") || url.searchParams.get("forgetPhrase");
+
+  if (forgetText) {
+    const removedCount = forgetPersonalLearningText(forgetText);
+    url.searchParams.delete("forgetText");
+    url.searchParams.delete("forgetPhrase");
+    window.history.replaceState({}, "", url.toString());
+    setAppState(
+      UI_STATES.READY,
+      `Đã quên memory cá nhân cho "${normalizeDisplayText(forgetText)}" (${removedCount} mục).`
+    );
+    return;
+  }
 
   if (url.searchParams.get("resetLearning") !== "1") {
     return;
@@ -1307,6 +1572,8 @@ async function handleCorrectReview() {
     saveReview({
       heardText,
       correctedText,
+      matchedText: matchedSentence?.correctedText || "",
+      playbackTranscript: finalTranscript,
       confidence,
       isCorrect: true,
       createdAt: new Date().toISOString()
@@ -1357,17 +1624,15 @@ async function handleCorrectReview() {
     const learnedSample = shouldLearnAudio
       ? await saveLastRecognitionAudioSample(heardText, correctedText, "review-correct")
       : null;
-    const frozenText = isLearningFrozen()
-      ? " Stability mode đang bật nên không ghi thêm memory/audio."
-      : !shouldLearnAudio
+    const audioSkipText = !shouldLearnAudio
       ? " Confidence chưa đủ để lưu audio học."
       : "";
     renderLearningReviewPanel(
       learnedSample?.serverPath
-        ? `Review status: đã lưu là đúng và thêm audio giọng thật vào server.${trust ? ` Trust ${Math.round(trust.trustScore * 100)}%.` : ""}${frozenText}`
+        ? `Review status: đã lưu là đúng và thêm audio giọng thật vào server.${trust ? ` Trust ${Math.round(trust.trustScore * 100)}%.` : ""}${audioSkipText}`
         : learnedSample
-        ? `Review status: đã lưu là đúng và thêm audio giọng thật vào mẫu học tạm.${trust ? ` Trust ${Math.round(trust.trustScore * 100)}%.` : ""}${frozenText}`
-        : `Review status: đã lưu là đúng.${trust ? ` Trust ${Math.round(trust.trustScore * 100)}%.` : ""}${frozenText}`
+        ? `Review status: đã lưu là đúng và thêm audio giọng thật vào mẫu học tạm.${trust ? ` Trust ${Math.round(trust.trustScore * 100)}%.` : ""}${audioSkipText}`
+        : `Review status: đã lưu là đúng.${trust ? ` Trust ${Math.round(trust.trustScore * 100)}%.` : ""}${audioSkipText}`
     );
   } catch (error) {
     renderLearningReviewPanel(
@@ -1414,39 +1679,75 @@ async function handleWrongReview(correctedTextValue) {
     return;
   }
 
-  if (!isLearningFrozen()) {
-    saveReview({
-      heardText,
-      correctedText,
-      confidence,
-      isCorrect: false,
-      createdAt: new Date().toISOString()
-    });
-  }
-  if (!isLearningFrozen()) {
-    updateSampleTrustFromReview(false);
-  }
-  if (!isLearningFrozen()) {
-    markAppliedCorrectionsWrong(
-      matchedSentence?.appliedPersonalCorrections ||
-        lastRecognitionResult?.appliedPersonalCorrections ||
-        []
-    );
-  }
-  if (!isLearningFrozen() && normalizeText(heardText) !== normalizeText(correctedText)) {
+  saveReview({
+    heardText,
+    correctedText,
+    matchedText: matchedSentence?.correctedText || "",
+    playbackTranscript: finalTranscript,
+    confidence,
+    isCorrect: false,
+    createdAt: new Date().toISOString()
+  });
+  const trust = updateSampleTrustFromReview(false);
+  markAppliedCorrectionsWrong(
+    matchedSentence?.appliedPersonalCorrections ||
+      lastRecognitionResult?.appliedPersonalCorrections ||
+      []
+  );
+
+  if (normalizeText(heardText) !== normalizeText(correctedText)) {
+    recordPersonalConfusion(heardText, matchedSentence?.correctedText || "", correctedText);
+    learnFromReview(heardText, correctedText);
     updatePersonalPhrasebook(heardText, {
       wrongCount: 1,
       source: "review-wrong-heard"
     });
   }
+  updatePersonalPhrasebook(correctedText, {
+    correctCount: 1,
+    locked: true,
+    source: "review-wrong-corrected"
+  });
+  updateContextMemory(correctedText, "review-wrong-corrected");
+  finalTranscript = correctedText;
+  if (matchedSentence) {
+    matchedSentence = {
+      ...matchedSentence,
+      correctedText,
+      personalizedCorrectedText: correctedText,
+      lightlyCorrectedText: correctedText,
+      confirmedByUser: true,
+      usedForPlayback: true
+    };
+    renderMatchedSentence(matchedSentence, true);
+  }
+  notifyRecognitionResult();
+
   reviewPanelElements.correctionInput.hidden = true;
   reviewPanelElements.saveWrongButton.hidden = true;
 
-  renderLearningReviewPanel(
-    isLearningFrozen()
-      ? "Review status: đã ghi nhận sai. Stability mode đang bật nên không cập nhật trust/correction/audio."
-      : "Review status: đã ghi nhận sai, giảm trust và không học trực tiếp từ mẫu sai."
-  );
+  try {
+    const learnedSample = await saveLastRecognitionAudioSample(
+      heardText,
+      correctedText,
+      "review-confirmed"
+    );
+    renderLearningReviewPanel(
+      learnedSample?.serverPath
+        ? `Review status: đã học từ lỗi sai, lưu câu đúng và thêm audio vào server.${trust ? ` Trust ${Math.round(trust.trustScore * 100)}%.` : ""}`
+        : learnedSample
+        ? `Review status: đã học từ lỗi sai, lưu câu đúng và thêm audio vào mẫu học tạm.${trust ? ` Trust ${Math.round(trust.trustScore * 100)}%.` : ""}`
+        : `Review status: đã học từ lỗi sai và lưu câu đúng.${trust ? ` Trust ${Math.round(trust.trustScore * 100)}%.` : ""}`
+    );
+  } catch (error) {
+    renderLearningReviewPanel(
+      `Review status: đã học từ lỗi sai, nhưng chưa lưu được audio mẫu (${error.message}).`
+    );
+  }
+
+  if (appState !== UI_STATES.UNSUPPORTED) {
+    setAppState(UI_STATES.READY, "Đã học từ lỗi sai. Bạn có thể nói tiếp hoặc bấm Phát lại.");
+  }
 }
 
 function normalizeVietnameseText(value) {
@@ -1726,8 +2027,13 @@ function applyPersonalCorrections(inputText, options = {}) {
 
     const confidence = correctionConfidence(matchedRule);
     const wrongText = tokens.slice(index, index + matchedRule.wrongTokens.length).join(" ");
+    const isSingleTokenCorrection =
+      matchedRule.wrongTokens.length === 1 && matchedRule.correctNormalizedTokens.length === 1;
+    const autoConfidenceThreshold = isSingleTokenCorrection
+      ? SINGLE_TOKEN_CORRECTION_AUTO_CONFIDENCE
+      : CORRECTION_AUTO_CONFIDENCE;
     const canAutoApply =
-      confidence >= CORRECTION_AUTO_CONFIDENCE &&
+      confidence >= autoConfidenceThreshold &&
       matchedRule.correctNormalizedTokens.length <= matchedRule.wrongTokens.length;
 
     if (!canAutoApply) {
@@ -2132,8 +2438,14 @@ function runShortPhraseEngine(inputText, options = {}) {
   const normalizedInput = normalizeText(inputText);
   const normalizedTextForMatching = hybridCorrection.correctedNormalizedText || normalizedInput;
   const inputTokens = normalizedTextForMatching.split(" ").filter(Boolean);
+  const rawInputTokens = normalizedInput.split(" ").filter(Boolean);
   const candidates = getShortPhraseCandidates();
   const learningStats = getShortPhraseLearningStats();
+  const confusionPairs = loadConfusionMemory().pairs || [];
+  const lockedConfusionCorrection = getLockedPersonalConfusionCorrection(
+    normalizedInput,
+    confusionPairs
+  );
   const scoredCandidates = [];
   let bestMatch = null;
 
@@ -2152,12 +2464,70 @@ function runShortPhraseEngine(inputText, options = {}) {
     };
   }
 
+  if (lockedConfusionCorrection?.correctedText) {
+    return {
+      originalText: inputText,
+      lightlyCorrectedText: lockedConfusionCorrection.correctedText,
+      personalizedCorrectedText: lockedConfusionCorrection.correctedText,
+      correctedText: lockedConfusionCorrection.correctedText,
+      confidence: lockedConfusionCorrection.confidence,
+      inputType: "short_phrase",
+      engineUsed: "confusion lock",
+      learningSources: ["locked confusion memory"],
+      topCandidates: [
+        {
+          id: "confusion-lock",
+          sourceId: "confusion-lock",
+          text: lockedConfusionCorrection.correctedText,
+          score: lockedConfusionCorrection.confidence,
+          fullSentenceScore: lockedConfusionCorrection.confidence,
+          keywordMatchCount: 0,
+          keywordMatchWords: [],
+          keywordRatio: 0,
+          learningSources: ["locked confusion memory"],
+          confusionAdjustment: lockedConfusionCorrection.evidence
+        }
+      ],
+      appliedPhraseCorrections: [],
+      suggestedPhraseCorrections: hybridCorrection.suggestedPhraseCorrections,
+      appliedPersonalCorrections: [
+        {
+          wrong: lockedConfusionCorrection.wrongGuessText || inputText,
+          correct: lockedConfusionCorrection.correctedText,
+          confidence: lockedConfusionCorrection.confidence,
+          ngramSize: tokenizeText(inputText).length || 1,
+          source: "locked-confusion-memory",
+          evidence: lockedConfusionCorrection.evidence
+        }
+      ],
+      suggestedPersonalCorrections: hybridCorrection.suggestedTokenCorrections,
+      skippedSentenceMatching: true,
+      match: {
+        id: "confusion-lock",
+        sourceId: "confusion-lock",
+        rawScore: lockedConfusionCorrection.confidence,
+        secondBestScore: 0,
+        matchMargin: lockedConfusionCorrection.confidence,
+        keywordMatchCount: 0,
+        keywordMatchWords: [],
+        topCandidates: []
+      }
+    };
+  }
+
   for (const candidate of candidates) {
     const stats = learningStats.get(candidate.normalizedText) || null;
     const rawScore = getMatchScore(normalizedTextForMatching, candidate.normalizedText);
+    const rawInputScore = getMatchScore(normalizedInput, candidate.normalizedText);
+    const rawInputOverlapScore = getTokenOverlapScore(rawInputTokens, candidate.tokens);
     const positionScore = getPositionTokenScore(inputTokens, candidate.tokens);
     const overlapScore = getTokenOverlapScore(inputTokens, candidate.tokens);
     const lengthPenalty = Math.abs(inputTokens.length - candidate.tokenCount) * 0.06;
+    const hasRawEvidence =
+      rawInputScore >= SHORT_PHRASE_MIN_RAW_SCORE ||
+      rawInputOverlapScore >= SHORT_PHRASE_MIN_RAW_OVERLAP ||
+      normalizedInput === candidate.normalizedText;
+    const weakRawEvidencePenalty = hasRawEvidence ? 0 : 0.28;
     const reviewBoost = Math.min(
       ((stats?.reviewCorrectCount || 0) + (stats?.correctionMemoryCount || 0)) *
         SHORT_PHRASE_REVIEW_BOOST_PER_COUNT,
@@ -2168,6 +2538,11 @@ function runShortPhraseEngine(inputText, options = {}) {
     const priorityBoost = Math.min(candidate.priority || 1, 5) * 0.018;
     const exactBoost = normalizedTextForMatching === candidate.normalizedText ? 0.18 : 0;
     const context = getContextBoost(candidate.text);
+    const confusion = getPersonalConfusionAdjustment(
+      normalizedTextForMatching,
+      candidate.normalizedText,
+      confusionPairs
+    );
     const confidence = Math.max(
       0,
       Math.min(
@@ -2179,11 +2554,16 @@ function runShortPhraseEngine(inputText, options = {}) {
           repeatBoost +
           context.boost +
           exactBoost -
-          lengthPenalty,
+          lengthPenalty +
+          confusion.adjustment -
+          weakRawEvidencePenalty,
         1
       )
     );
     const learningSources = getLearningSourcesForPhrase(candidate, stats, hybridCorrection);
+    const candidateLearningSources = Array.from(
+      new Set([...learningSources, ...context.sources, ...confusion.sources])
+    );
 
     scoredCandidates.push({
       id: candidate.id,
@@ -2191,11 +2571,15 @@ function runShortPhraseEngine(inputText, options = {}) {
       text: candidate.text,
       score: confidence,
       fullSentenceScore: rawScore,
+      rawInputScore,
+      rawInputOverlapScore,
       keywordMatchCount: getKeywordMatch(inputTokens, candidate.tokens).count,
       keywordMatchWords: getKeywordMatch(inputTokens, candidate.tokens).words,
       keywordRatio: overlapScore,
-      learningSources: Array.from(new Set([...learningSources, ...context.sources])),
-      contextBoost: context.boost
+      learningSources: candidateLearningSources,
+      contextBoost: context.boost,
+      confusionAdjustment: confusion.adjustment,
+      weakRawEvidencePenalty
     });
 
     if (!bestMatch || confidence > bestMatch.confidence) {
@@ -2203,8 +2587,11 @@ function runShortPhraseEngine(inputText, options = {}) {
         candidate,
         confidence,
         rawScore,
+        rawInputScore,
+        rawInputOverlapScore,
+        hasRawEvidence,
         stats,
-        learningSources: Array.from(new Set([...learningSources, ...context.sources])),
+        learningSources: candidateLearningSources,
         contextBoost: context.boost
       };
     }
@@ -2217,10 +2604,18 @@ function runShortPhraseEngine(inputText, options = {}) {
   const personalizedText = hybridCorrection.correctedPhraseOutput || inputText;
   const secondBestScore = topCandidates[1]?.score || 0;
   const matchMargin = Math.max((topCandidates[0]?.score || 0) - secondBestScore, 0);
+  const hasPersonalEvidence = Boolean(
+    bestMatch?.stats &&
+      (Number(bestMatch.stats.reviewCorrectCount || 0) > 0 ||
+        Number(bestMatch.stats.correctionMemoryCount || 0) > 0 ||
+        Number(bestMatch.stats.repeatedCorrectCount || 0) >= SHORT_PHRASE_REPEAT_THRESHOLD)
+  );
   const accepted =
     bestMatch &&
     bestMatch.confidence >= SHORT_PHRASE_ACCEPT_CONFIDENCE &&
-    (matchMargin >= TEXT_MATCH_MIN_MARGIN ||
+    bestMatch.hasRawEvidence &&
+    (matchMargin >= SHORT_PHRASE_TEXT_MATCH_MIN_MARGIN ||
+      (hasPersonalEvidence && matchMargin >= TEXT_MATCH_MIN_MARGIN) ||
       normalizedTextForMatching === bestMatch.candidate.normalizedText);
   const correctedText = accepted ? bestMatch.candidate.text : personalizedText;
 
@@ -2770,6 +3165,7 @@ function findBestMatch(inputText, sentences, options = {}) {
   const sentenceEntries = normalizeSentenceList(sentences);
   const inputTokens = normalizedTextForMatching.split(" ").filter(Boolean);
   const uniqueInputTokens = getUniqueTokens(normalizedTextForMatching);
+  const confusionPairs = loadConfusionMemory().pairs || [];
 
   if (
     !inputNormalized ||
@@ -2836,13 +3232,25 @@ function findBestMatch(inputText, sentences, options = {}) {
     const contextScore = getContextScore(inputTokens, candidateTokens);
     const personalContext = getContextBoost(entry.text);
     const keywordBoost = Math.min(candidate.keywordMatch.count * 0.035, 0.16);
-    const combinedScore = Math.min(
-      rawScore * 0.68 +
-        contextScore * 0.18 +
-        candidate.keywordRatio * 0.14 +
-        keywordBoost +
-        personalContext.boost * 0.65,
-      1
+    const confusion = getPersonalConfusionAdjustment(
+      normalizedTextForMatching,
+      candidateNormalized,
+      confusionPairs
+    );
+    const combinedScore = Math.max(
+      0,
+      Math.min(
+        rawScore * 0.68 +
+          contextScore * 0.18 +
+          candidate.keywordRatio * 0.14 +
+          keywordBoost +
+          personalContext.boost * 0.65 +
+          confusion.adjustment,
+        1
+      )
+    );
+    const candidateLearningSources = Array.from(
+      new Set([...personalContext.sources, ...confusion.sources])
     );
     scoredCandidates.push({
       id: entry.id,
@@ -2855,7 +3263,8 @@ function findBestMatch(inputText, sentences, options = {}) {
       keywordMatchWords: candidate.keywordMatch.words,
       keywordRatio: candidate.keywordRatio,
       contextBoost: personalContext.boost,
-      learningSources: personalContext.sources
+      confusionAdjustment: confusion.adjustment,
+      learningSources: candidateLearningSources
     });
 
     if (!bestMatch || combinedScore > bestMatch.rawScore) {
@@ -2892,7 +3301,7 @@ function findBestMatch(inputText, sentences, options = {}) {
         engineUsed: "sentence engine",
         learningSources: [
           ...(hybridCorrection.appliedTokenCorrections.length ? ["correction memory"] : []),
-          ...personalContext.sources
+          ...candidateLearningSources
         ],
         contextBoost: personalContext.boost
       };
@@ -3390,6 +3799,20 @@ async function applyAiArbiter(matchResult) {
     return matchResult;
   }
 
+  const isHighConfidenceLocalResult =
+    matchResult.confidence >= 0.9 &&
+    (matchResult.inputType === "short_phrase" ||
+      normalizeText(matchResult.correctedText || "") === normalizeText(matchResult.transcript || "")) &&
+    isTextMatchStable(matchResult);
+
+  if (isHighConfidenceLocalResult) {
+    return {
+      ...matchResult,
+      aiSkipped: true,
+      aiReason: "local result was already stable"
+    };
+  }
+
   const decision = await requestAiArbiterDecision(matchResult);
   return decision ? applyAiArbiterDecision(matchResult, decision) : matchResult;
 }
@@ -3434,7 +3857,16 @@ function isTextMatchStable(matchResult) {
     return true;
   }
 
-  return getTextMatchMargin(matchResult) >= TEXT_MATCH_MIN_MARGIN;
+  const correctedTokenCount = tokenizeText(matchResult.correctedText || "").length;
+  const transcriptNormalized = normalizeText(matchResult.transcript || matchResult.originalText || "");
+  const correctedNormalized = normalizeText(matchResult.correctedText || "");
+  const exactMatch = Boolean(transcriptNormalized && transcriptNormalized === correctedNormalized);
+  const requiredMargin =
+    matchResult.inputType === "short_phrase" || correctedTokenCount <= SHORT_PHRASE_MAX_WORDS
+      ? SHORT_PHRASE_TEXT_MATCH_MIN_MARGIN
+      : SENTENCE_TEXT_MATCH_MIN_MARGIN;
+
+  return exactMatch || getTextMatchMargin(matchResult) >= requiredMargin;
 }
 
 function finishLocalRecognition(matchResult) {
@@ -3769,6 +4201,32 @@ async function processLocalRecognitionBlob(blob) {
   });
   const fastAudioMatchPromise = matchVoiceTemplateSample(blob).catch(() => null);
   const learnedAudioMatchPromise = matchLearnedAudioSample(blob).catch(() => null);
+  const sttMatchPromise = (async () => {
+    try {
+      return {
+        result: await applyAiArbiter(
+          buildMatchResultFromTranscript(await transcribeAudioWithLocalServer(blob))
+        )
+      };
+    } catch (error) {
+      return { error };
+    }
+  })();
+  const earlyLearnedAudioMatch = await Promise.race([
+    learnedAudioMatchPromise,
+    timeoutAfter(LEARNED_AUDIO_FAST_WAIT_MS)
+  ]);
+
+  if (
+    earlyLearnedAudioMatch?.confidence >= LOCKED_LEARNED_AUDIO_SCORE &&
+    isAudioMatchStable(earlyLearnedAudioMatch, { locked: true })
+  ) {
+    earlyLearnedAudioMatch.transcript = earlyLearnedAudioMatch.correctedText;
+    earlyLearnedAudioMatch.engine = "learned-audio";
+    earlyLearnedAudioMatch.model = "confirmed-local-fast";
+    return attachTiming(earlyLearnedAudioMatch);
+  }
+
   const fastAudioMatch = await Promise.race([
     fastAudioMatchPromise,
     timeoutAfter(FAST_AUDIO_WAIT_MS)
@@ -3782,21 +4240,6 @@ async function processLocalRecognitionBlob(blob) {
     fastAudioMatch.engine = "audio-template";
     fastAudioMatch.model = "cached-local";
     return attachTiming(fastAudioMatch);
-  }
-
-  const earlyLearnedAudioMatch = await Promise.race([
-    learnedAudioMatchPromise,
-    timeoutAfter(LEARNED_AUDIO_FAST_WAIT_MS)
-  ]);
-
-  if (
-    earlyLearnedAudioMatch?.confidence >= LOCKED_LEARNED_AUDIO_SCORE &&
-    isAudioMatchStable(earlyLearnedAudioMatch, { locked: true })
-  ) {
-    earlyLearnedAudioMatch.transcript = earlyLearnedAudioMatch.correctedText;
-    earlyLearnedAudioMatch.engine = "learned-audio";
-    earlyLearnedAudioMatch.model = "confirmed-local";
-    return attachTiming(earlyLearnedAudioMatch);
   }
 
   if (
@@ -3837,9 +4280,11 @@ async function processLocalRecognitionBlob(blob) {
   }
 
   try {
-    const sttMatchResult = await applyAiArbiter(
-      buildMatchResultFromTranscript(await transcribeAudioWithLocalServer(blob))
-    );
+    const sttMatchPayload = await sttMatchPromise;
+    if (sttMatchPayload.error) {
+      throw sttMatchPayload.error;
+    }
+    const sttMatchResult = sttMatchPayload.result;
 
     if (sttMatchResult.confidence >= AUTO_CORRECTION_SCORE) {
       return attachTiming(sttMatchResult);
@@ -3979,7 +4424,10 @@ async function startLocalRecognition() {
     });
     startLocalSilenceDetection(localRecognitionStream);
     const mimeType = getPreferredLocalRecognitionMimeType();
-    const options = mimeType ? { mimeType } : undefined;
+    const options = {
+      ...(mimeType ? { mimeType } : {}),
+      audioBitsPerSecond: LOCAL_RECOGNITION_AUDIO_BITS_PER_SECOND
+    };
     localRecognitionRecorder = options
       ? new window.MediaRecorder(localRecognitionStream, options)
       : new window.MediaRecorder(localRecognitionStream);
@@ -4405,6 +4853,7 @@ window.voiceCoachControls = {
   loadPhraseDataset,
   getPhraseDatasetEntries: () => phraseDatasetEntries.slice(),
   learnFromReview,
+  forgetPersonalLearningText,
   exportCorrections,
   resetLearnedCorrections,
   resetAllPersonalLearning

@@ -7,14 +7,20 @@ def transcribe_with_faster_whisper(audio_path):
     from faster_whisper import WhisperModel
 
     model_name = os.environ.get("WHISPER_MODEL", "base")
+    speed_mode = os.environ.get("WHISPER_SPEED_MODE", "quality").lower()
+    default_beam_size = "3" if speed_mode == "quality" else "1"
     compute_type = os.environ.get("WHISPER_COMPUTE_TYPE", "int8")
     device = os.environ.get("WHISPER_DEVICE", "cpu")
     model = WhisperModel(model_name, device=device, compute_type=compute_type)
     segments, info = model.transcribe(
         audio_path,
         language=os.environ.get("WHISPER_LANGUAGE", "vi"),
-        beam_size=5,
-        vad_filter=True,
+        beam_size=int(os.environ.get("WHISPER_BEAM_SIZE", default_beam_size)),
+        best_of=int(os.environ.get("WHISPER_BEST_OF", default_beam_size)),
+        temperature=0,
+        vad_filter=os.environ.get("WHISPER_VAD_FILTER", "false").lower() == "true",
+        condition_on_previous_text=False,
+        without_timestamps=True,
     )
     text = " ".join(segment.text.strip() for segment in segments).strip()
 

@@ -103,20 +103,17 @@ Pipeline nhận diện được tách thành 3 tầng:
 
 1. `RAW STT ENGINE`: server local chạy faster-whisper/openai-whisper và chỉ trả transcript thô. Raw STT không được tự dùng để phát lại nếu chưa có correction/prediction đủ tin cậy.
 2. `PERSONAL AI CORRECTION ENGINE`: browser học correction memory từ review đúng, gồm token, bigram và trigram. Memory có `correctCount/wrongCount/confidence`, nên các sửa như `dao -> đào` hoặc cụm quen thuộc chỉ được auto-apply khi đủ bằng chứng.
-3. `PERSONAL AUDIO MATCH ENGINE`: browser dùng Web Audio API để trích embedding nhẹ gồm duration, RMS, zero-crossing, speaking rate, energy vector, pause pattern và spectral frames. Audio mới được so với mẫu đã review đúng; mẫu sai chỉ làm giảm trust.
+3. `PERSONAL ACOUSTIC PROFILE`: khi bạn sửa sai, app lưu cặp dễ nhầm `App nghe -> câu đúng`; lần sau candidate sai bị trừ điểm, candidate đúng được cộng điểm nếu âm đầu vào giống lỗi cũ.
+4. `PERSONAL AUDIO MATCH ENGINE`: browser dùng Web Audio API để trích embedding gồm duration, RMS, zero-crossing, speaking rate, energy vector, pause pattern, spectral frames và cepstral/log-spectrum frames. Audio mới được so với mẫu đã review đúng; mẫu sai chỉ làm giảm trust.
 
-Review hoạt động theo nguyên tắc chống drift:
+Review hoạt động theo nguyên tắc học có xác nhận:
 
 - Bấm `Đúng`: tăng trust, học token/cụm nếu confidence đủ, lưu audio embedding đúng.
-- Bấm `Sai`: không học correction/audio trực tiếp, chỉ ghi negative review và giảm trust.
+- Bấm `Sai`: nhập câu đúng để app học cặp `App nghe -> câu đúng`, giảm trust mẫu đoán sai, lưu câu đúng vào phrasebook/context và lưu audio làm mẫu đã xác nhận.
 - Mẫu audio/cụm cá nhân chỉ được promote mạnh khi đúng ít nhất 5 lần và sai không quá 1 lần.
+- Mẫu đã xác nhận được dùng sớm làm acoustic evidence, nhưng vẫn cần điểm âm học và khoảng cách top 1/top 2 đủ tốt để tự phát.
 
-Trong panel review có 2 chế độ:
-
-- `Learning`: học tăng dần từ review đúng.
-- `Stability`: freeze learning, chỉ nhận diện và debug, không ghi thêm memory/audio/trust.
-
-Bật `Debug` trong panel hoặc mở URL với `?debug=1` để xem raw STT, corrected text, correction rules, confidence, audio similarity, trust và source engine.
+Mở URL với `?debug=1` để xem raw STT, corrected text, correction rules, confidence, audio similarity, trust và source engine.
 
 ## Thu âm dữ liệu giọng cá nhân
 
