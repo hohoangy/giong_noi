@@ -15,6 +15,11 @@ let learnedDb = null;
 let transcriberWorker = null;
 let transcriberWorkerStartPromise = null;
 let transcriberRequestId = 0;
+let transcriberStatus = {
+  state: "idle",
+  modelLoadMs: 0,
+  error: ""
+};
 
 const contentTypes = {
   ".css": "text/css; charset=utf-8",
@@ -580,6 +585,11 @@ async function getTranscriberWorker() {
 
   const candidates = getPythonCandidates();
   const errors = [];
+  transcriberStatus = {
+    state: "loading",
+    modelLoadMs: 0,
+    error: ""
+  };
 
   transcriberWorkerStartPromise = (async () => {
     for (const candidate of candidates) {
@@ -592,6 +602,11 @@ async function getTranscriberWorker() {
             worker.modelLoadMs ? ` in ${worker.modelLoadMs}ms` : ""
           }.`
         );
+        transcriberStatus = {
+          state: "ready",
+          modelLoadMs: worker.modelLoadMs || 0,
+          error: ""
+        };
         return worker;
       } catch (error) {
         errors.push(`${candidate.command}: ${error.message}`);
@@ -600,10 +615,37 @@ async function getTranscriberWorker() {
     }
 
     transcriberWorkerStartPromise = null;
+    transcriberStatus = {
+      state: "error",
+      modelLoadMs: 0,
+      error: errors.join(" | ")
+    };
     throw new Error(errors.join(" | "));
   })();
 
   return transcriberWorkerStartPromise;
+}
+
+async function handleTranscriberStatusRequest(request, response) {
+  const requestUrl = new URL(request.url, `http://${request.headers.host || "localhost"}`);
+  const shouldWarm = requestUrl.searchParams.get("warm") === "1";
+
+  if (shouldWarm && transcriberStatus.state !== "ready" && transcriberStatus.state !== "loading") {
+    getTranscriberWorker().catch((error) => {
+      transcriberStatus = {
+        state: "error",
+        modelLoadMs: 0,
+        error: error.message
+      };
+    });
+  }
+
+  sendJson(response, 200, {
+    ok: transcriberStatus.state === "ready",
+    ...transcriberStatus,
+    model: process.env.WHISPER_MODEL || "base",
+    speedMode: process.env.WHISPER_SPEED_MODE || "quality"
+  });
 }
 
 async function runLocalTranscriber(audioPath) {
@@ -844,6 +886,11 @@ async function handleAiArbiterRequest(request, response) {
 }
 
 const server = http.createServer((request, response) => {
+  if (request.method === "GET" && request.url.startsWith("/api/transcribe/status")) {
+    handleTranscriberStatusRequest(request, response);
+    return;
+  }
+
   if (request.method === "POST" && request.url.startsWith("/api/transcribe")) {
     handleTranscribeRequest(request, response);
     return;

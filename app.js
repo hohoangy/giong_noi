@@ -17,7 +17,8 @@ const LOCAL_RECOGNITION_MIME_CANDIDATES = [
   "audio/mp4"
 ];
 const LOCAL_RECOGNITION_AUTO_STOP_MS = 120000;
-const LOCAL_RECOGNITION_SILENCE_STOP_MS = 15000;
+const LOCAL_RECOGNITION_SILENCE_STOP_MS = 1400;
+const LOCAL_RECOGNITION_PRE_SPEECH_TIMEOUT_MS = 6000;
 const LOCAL_RECOGNITION_MIN_RECORDING_MS = 450;
 const LOCAL_RECOGNITION_CHUNK_MS = 200;
 const LOCAL_RECOGNITION_SILENCE_RMS = 0.01;
@@ -53,7 +54,7 @@ const UI_STATES = {
 };
 const STATUS_MESSAGES = {
   [UI_STATES.READY]: "Sẵn sàng để bắt đầu",
-  [UI_STATES.LISTENING]: "Đang thu âm local, app sẽ tự xử lý sau 15 giây im lặng",
+  [UI_STATES.LISTENING]: "Đang thu âm local, app sẽ tự xử lý sau khoảng 1.4 giây im lặng",
   [UI_STATES.PROCESSING]: "Đang xử lý, sẽ tự phát lại sau 0.5 giây",
   [UI_STATES.SPEAKING]: "Đang phát lại câu vừa nhận diện",
   [UI_STATES.ERROR]: "Đã có lỗi xảy ra",
@@ -78,11 +79,14 @@ const SHORT_PHRASE_MAX_REVIEW_BOOST = 0.18;
 const SHORT_PHRASE_REPEAT_THRESHOLD = 3;
 const LEARNED_AUDIO_CORRECTION_SCORE = 0.66;
 const VOICE_TEMPLATE_CORRECTION_SCORE = 0.68;
+const SHORT_PHRASE_AUDIO_AUTO_CONFIDENCE = 0.68;
+const SHORT_PHRASE_AUDIO_REVIEW_AUTO_CONFIDENCE = 0.62;
 const FAST_AUDIO_ACCEPT_SCORE = 0.78;
 const FAST_AUDIO_STABLE_ACCEPT_SCORE = 0.86;
 const LOCKED_LEARNED_AUDIO_SCORE = 0.86;
 const AUDIO_MATCH_MIN_MARGIN = 0.08;
 const AUDIO_MATCH_LOCKED_MIN_MARGIN = 0.03;
+const AUDIO_MATCH_SHORT_PHRASE_MIN_MARGIN = 0.04;
 const TEXT_MATCH_MIN_MARGIN = 0.1;
 const SHORT_PHRASE_TEXT_MATCH_MIN_MARGIN = 0.14;
 const SHORT_PHRASE_MIN_RAW_SCORE = 0.5;
@@ -93,6 +97,7 @@ const AI_ARBITER_MIN_AUTOSPEAK_CONFIDENCE = 0.82;
 const FAST_AUDIO_WAIT_MS = 450;
 const LEARNED_AUDIO_FAST_WAIT_MS = 160;
 const LEARNED_AUDIO_BORDERLINE_WAIT_MS = 260;
+const FIXED_TARGET_MATCH_CONFIDENCE = 0.92;
 const FREE_SPEECH_STT_SCORE = 0.72;
 const SHORT_TRANSCRIPT_AUDIO_CORRECTION_SCORE = 0.88;
 const MIN_MATCH_WORD_COUNT = 4;
@@ -106,6 +111,7 @@ const SPEECH_TRUST_STORAGE_KEY = "voicecoach_sample_trust";
 const PERSONAL_PHRASEBOOK_STORAGE_KEY = "voicecoach_personal_phrasebook";
 const PERSONAL_LEARNING_MODE_STORAGE_KEY = "voicecoach_learning_mode";
 const PERSONAL_CONFUSION_MEMORY_STORAGE_KEY = "voicecoach_confusion_memory";
+const AUTO_TARGET_TRAINING_STORAGE_KEY = "voicecoach_auto_target_training";
 const RECORDER_STORAGE_KEY = "voiceCoachDatasetRecorder";
 const CONTEXT_MEMORY_MAX_ITEMS = 40;
 const CONTEXT_RECENT_LIMIT = 8;
@@ -121,7 +127,7 @@ const PERSONAL_CONFUSION_FUZZY_LOCK_COUNT = 3;
 const PERSONAL_CONFUSION_LOCK_INPUT_SCORE = 0.84;
 const PERSONAL_CONFUSION_LOCK_CONFIDENCE = 0.9;
 const PERSONAL_CORRECTION_MIN_LEARN_CONFIDENCE = 0.62;
-const PERSONAL_AUDIO_MIN_LEARN_CONFIDENCE = 0.62;
+const PERSONAL_AUDIO_MIN_LEARN_CONFIDENCE = 0.5;
 const PERSONAL_AUDIO_PROMOTE_COUNT = 3;
 const TRUST_CORRECT_BOOST = 0.14;
 const TRUST_WRONG_PENALTY = 0.14;
@@ -181,6 +187,8 @@ let localRecognitionLevelTimer = null;
 let localRecognitionStartedAt = 0;
 let localRecognitionTiming = null;
 let localRecognitionAudioStats = null;
+let localRecognitionHasSpeechStarted = false;
+let localRecognitionLastSpeechAt = 0;
 let voiceTemplateWarmupPromise = null;
 let learnedCorrections = loadCorrections();
 let correctionRuleCache = null;
@@ -191,6 +199,9 @@ let phraseDatasetByLength = new Map();
 let phraseDatasetExactMap = new Map();
 let reviewPanelElements = null;
 let personalLearningMode = loadPersonalLearningMode();
+let aiArbiterAvailable = null;
+let transcriberWarmupState = "unknown";
+let autoTargetTrainingToggle = null;
 
 function readLocalJson(key, fallback) {
   try {
@@ -203,6 +214,22 @@ function readLocalJson(key, fallback) {
 
 function writeLocalJson(key, value) {
   window.localStorage.setItem(key, JSON.stringify(value, null, 2));
+}
+
+function isAutoTargetTrainingEnabled() {
+  const stored = window.localStorage.getItem(AUTO_TARGET_TRAINING_STORAGE_KEY);
+  if (stored === "0") {
+    return false;
+  }
+
+  return autoTargetTrainingToggle ? autoTargetTrainingToggle.checked : true;
+}
+
+function setAutoTargetTrainingEnabled(enabled) {
+  window.localStorage.setItem(AUTO_TARGET_TRAINING_STORAGE_KEY, enabled ? "1" : "0");
+  if (autoTargetTrainingToggle) {
+    autoTargetTrainingToggle.checked = Boolean(enabled);
+  }
 }
 
 function loadPersonalLearningMode() {
@@ -977,6 +1004,10 @@ function getReviewCorrectedText() {
   ).trim();
 }
 
+function getCurrentTrainingTargetText() {
+  return (getCurrentTargetEntryForLocalRecognition()?.text || "").trim();
+}
+
 function getTopLearnedCorrections(limit = 3) {
   return learnedCorrections
     .slice()
@@ -1064,6 +1095,11 @@ function createLearningReviewPanel() {
   wrongButton.type = "button";
   wrongButton.textContent = "Sai";
 
+  const trainTargetButton = document.createElement("button");
+  trainTargetButton.className = "secondary-button";
+  trainTargetButton.type = "button";
+  trainTargetButton.textContent = "Học mục đang chọn";
+
   const correctionInput = document.createElement("input");
   correctionInput.className = "field-input";
   correctionInput.type = "text";
@@ -1080,7 +1116,7 @@ function createLearningReviewPanel() {
   const showWrongReviewInput = () => {
     correctionInput.hidden = false;
     saveWrongButton.hidden = false;
-    correctionInput.value = getReviewCorrectedText();
+    correctionInput.value = getCurrentTrainingTargetText() || getReviewCorrectedText();
     correctionInput.focus();
     status.textContent = "Nhập câu đúng rồi bấm Lưu sửa.";
   };
@@ -1091,6 +1127,9 @@ function createLearningReviewPanel() {
   wrongButton.addEventListener("click", () => {
     showWrongReviewInput();
   });
+  trainTargetButton.addEventListener("click", () => {
+    handleTrainCurrentTarget();
+  });
   saveWrongButton.addEventListener("click", () => {
     handleWrongReview(correctionInput.value);
   });
@@ -1100,7 +1139,7 @@ function createLearningReviewPanel() {
     }
   });
 
-  controls.append(correctButton, wrongButton, correctionInput, saveWrongButton);
+  controls.append(correctButton, wrongButton, trainTargetButton, correctionInput, saveWrongButton);
   panel.append(confirmBox, status, debug, controls);
   guessMeta.insertAdjacentElement("afterend", panel);
 
@@ -1115,6 +1154,7 @@ function createLearningReviewPanel() {
     confirmInput,
     correctButton,
     wrongButton,
+    trainTargetButton,
     correctionInput,
     saveWrongButton,
     showWrongReviewInput
@@ -1133,12 +1173,19 @@ function renderLearningReviewPanel(message = "") {
 
   reviewPanelElements.correctButton.disabled = !hasReviewTarget;
   reviewPanelElements.wrongButton.disabled = !hasReviewTarget;
+  const trainingTargetText = getCurrentTrainingTargetText();
+  reviewPanelElements.trainTargetButton.disabled = !heardText || !trainingTargetText;
+  reviewPanelElements.trainTargetButton.textContent = trainingTargetText
+    ? `Học mục: ${trainingTargetText}`
+    : "Học mục đang chọn";
   reviewPanelElements.status.textContent =
     message ||
     `Review status: ${
       hasReviewTarget
         ? matchedSentence?.usedForPlayback
           ? "chờ đánh dấu câu app phát đúng/sai"
+          : trainingTargetText
+          ? "nếu bạn đã đọc đúng mục đang chọn, bấm Học mục để app học nhanh"
           : "chờ review raw STT; bấm Đúng nếu App nghe đúng"
         : "chưa có kết quả để review"
     }.`;
@@ -1561,7 +1608,7 @@ async function handleCorrectReview() {
   const correctedText = getReviewCorrectedText() || heardText;
   const confidence = matchedSentence?.confidence || lastRecognitionResult?.matchScore || 0;
   const shouldLearnCorrections = canLearnFromReview(confidence);
-  const shouldLearnAudio = canLearnFromReview(confidence, PERSONAL_AUDIO_MIN_LEARN_CONFIDENCE);
+  let shouldLearnAudio = canLearnFromReview(confidence, PERSONAL_AUDIO_MIN_LEARN_CONFIDENCE);
 
   if (!heardText && !correctedText) {
     renderLearningReviewPanel("Review status: chưa có dữ liệu để lưu.");
@@ -1586,13 +1633,16 @@ async function handleCorrectReview() {
   const acceptedGuessedCorrection =
     Boolean(matchedSentence?.usedForPlayback) ||
     normalizeText(heardText) !== normalizeText(correctedText);
+  shouldLearnAudio =
+    shouldLearnAudio ||
+    Boolean(!isLearningFrozen() && correctedText && (acceptedGuessedCorrection || matchedSentence?.correctedText));
 
   if (shouldLearnCorrections && acceptedGuessedCorrection) {
     markAppliedCorrectionsSuccessful(appliedPersonalCorrections);
   } else if (shouldLearnCorrections) {
     markAppliedCorrectionsWrong(appliedPersonalCorrections);
   }
-  const trust = shouldLearnCorrections ? updateSampleTrustFromReview(true) : null;
+  const trust = updateSampleTrustFromReview(true);
 
   if (correctedText) {
     if (shouldLearnCorrections) {
@@ -1643,6 +1693,175 @@ async function handleCorrectReview() {
   if (appState !== UI_STATES.UNSUPPORTED) {
     setAppState(UI_STATES.READY, "Đã lưu là đúng. Bạn có thể nói tiếp hoặc bấm Phát lại.");
   }
+}
+
+async function handleTrainCurrentTarget() {
+  const heardText = getReviewHeardText();
+  const targetText = getCurrentTrainingTargetText();
+  const previousGuessText = matchedSentence?.correctedText || "";
+
+  if (!heardText || !targetText) {
+    renderLearningReviewPanel("Review status: cần có raw STT và mục đang chọn để học.");
+    return;
+  }
+
+  const confidence = Math.max(
+    Number(matchedSentence?.confidence || lastRecognitionResult?.matchScore || 0),
+    FIXED_TARGET_MATCH_CONFIDENCE
+  );
+
+  saveReview({
+    heardText,
+    correctedText: targetText,
+    matchedText: previousGuessText,
+    playbackTranscript: targetText,
+    confidence,
+    isCorrect: true,
+    supervisedTarget: true,
+    createdAt: new Date().toISOString()
+  });
+
+  if (normalizeText(heardText) !== normalizeText(targetText)) {
+    recordPersonalConfusion(heardText, previousGuessText, targetText);
+    upsertCorrectionRule(heardText, targetText, {
+      learnedCount: 3,
+      successCount: 2,
+      usedCount: 1,
+      ngramSize: Math.min(MAX_CORRECTION_NGRAM, tokenizeText(heardText).length || 1)
+    });
+    learnFromReview(heardText, targetText);
+    sortAndTrimCorrections();
+    saveCorrections();
+  }
+
+  updatePersonalPhrasebook(targetText, {
+    correctCount: 2,
+    locked: true,
+    source: "fixed-target-supervised"
+  });
+  updateContextMemory(targetText, "fixed-target-supervised");
+
+  finalTranscript = targetText;
+  matchedSentence = {
+    ...(matchedSentence || {}),
+    correctedText: targetText,
+    personalizedCorrectedText: targetText,
+    lightlyCorrectedText: targetText,
+    confidence,
+    confirmedByUser: true,
+    usedForPlayback: true,
+    fixedTargetTraining: true,
+    learningSources: Array.from(
+      new Set([...(matchedSentence?.learningSources || []), "fixed target supervised"])
+    )
+  };
+  renderTranscript(recognizedTranscript || heardText, "final");
+  renderMatchedSentence(matchedSentence, true);
+  notifyRecognitionResult();
+
+  try {
+    const learnedSample = await saveLastRecognitionAudioSample(
+      heardText,
+      targetText,
+      "review-confirmed"
+    );
+    renderLearningReviewPanel(
+      learnedSample?.serverPath
+        ? "Review status: đã học mục đang chọn, lưu correction và audio vào server."
+        : learnedSample
+        ? "Review status: đã học mục đang chọn, lưu correction và audio tạm trong trình duyệt."
+        : "Review status: đã học mục đang chọn và lưu correction."
+    );
+  } catch (error) {
+    renderLearningReviewPanel(
+      `Review status: đã học mục đang chọn, nhưng chưa lưu được audio mẫu (${error.message}).`
+    );
+  }
+
+  if (appState !== UI_STATES.UNSUPPORTED) {
+    setAppState(UI_STATES.READY, "Đã học theo mục đang chọn. Bạn có thể nói lại để kiểm tra.");
+  }
+}
+
+function applyAutoTargetTraining(matchResult) {
+  const targetText = getCurrentTrainingTargetText();
+  const heardText = (matchResult?.transcript || recognizedTranscript || "").trim();
+
+  if (!isAutoTargetTrainingEnabled() || !targetText || !heardText) {
+    return { matchResult, targetText: "", heardText: "", shouldPersist: false };
+  }
+
+  const confidence = Math.max(Number(matchResult?.confidence || 0), FIXED_TARGET_MATCH_CONFIDENCE);
+  const targetEntry = getCurrentTargetEntryForLocalRecognition();
+
+  return {
+    targetText,
+    heardText,
+    shouldPersist: true,
+    matchResult: {
+      ...(matchResult || {}),
+      transcript: heardText,
+      correctedText: targetText,
+      personalizedCorrectedText: targetText,
+      lightlyCorrectedText: targetText,
+      confidence,
+      isConfirmed: true,
+      usedForPlayback: true,
+      autoTargetTraining: true,
+      engineUsed: `${matchResult?.engineUsed || matchResult?.engine || "recognition"} + auto target training`,
+      learningSources: Array.from(
+        new Set([...(matchResult?.learningSources || []), "auto target training"])
+      ),
+      match: {
+        ...(matchResult?.match || {}),
+        sentenceId: targetEntry?.id || matchResult?.match?.sentenceId || "",
+        sourceSentenceId: targetEntry?.sourceId || matchResult?.match?.sourceSentenceId || "",
+        rawConfidence: Math.max(Number(matchResult?.match?.rawConfidence || 0), confidence),
+        secondBestScore: Math.min(Number(matchResult?.match?.secondBestScore || 0), confidence - 0.2)
+      }
+    }
+  };
+}
+
+async function persistAutoTargetTraining(heardText, targetText, sourceMatchResult = {}) {
+  if (!heardText || !targetText) {
+    return null;
+  }
+
+  const confidence = Math.max(Number(sourceMatchResult.confidence || 0), FIXED_TARGET_MATCH_CONFIDENCE);
+  saveReview({
+    heardText,
+    correctedText: targetText,
+    matchedText: sourceMatchResult.correctedText || "",
+    playbackTranscript: targetText,
+    confidence,
+    isCorrect: true,
+    supervisedTarget: true,
+    autoTargetTraining: true,
+    createdAt: new Date().toISOString()
+  });
+
+  if (normalizeText(heardText) !== normalizeText(targetText)) {
+    recordPersonalConfusion(heardText, sourceMatchResult.correctedText || "", targetText);
+    upsertCorrectionRule(heardText, targetText, {
+      learnedCount: 4,
+      successCount: 3,
+      usedCount: 1,
+      ngramSize: Math.min(MAX_CORRECTION_NGRAM, tokenizeText(heardText).length || 1)
+    });
+    learnFromReview(heardText, targetText);
+    sortAndTrimCorrections();
+    saveCorrections();
+  }
+
+  updatePersonalPhrasebook(targetText, {
+    correctCount: 2,
+    locked: true,
+    source: "auto-target-training"
+  });
+  updateContextMemory(targetText, "auto-target-training");
+
+  return saveLastRecognitionAudioSample(heardText, targetText, "review-confirmed");
 }
 
 async function saveLastRecognitionAudioSample(heardText, correctedText, take = "review-wrong") {
@@ -2244,6 +2463,7 @@ function saveReview(review) {
   const reviews = loadReviews();
   reviews.push(review);
   window.localStorage.setItem(SPEECH_REVIEWS_STORAGE_KEY, JSON.stringify(reviews, null, 2));
+  window.dispatchEvent(new CustomEvent("voicecoach:training-data-changed"));
   return review;
 }
 
@@ -3385,7 +3605,7 @@ function canUseLearnedAudioFallbackAfterStt(sttMatchResult) {
   const transcriptNormalized = normalizeVietnameseText(sttMatchResult?.transcript || "");
 
   if (!isLongEnoughForSentenceGuess(transcriptNormalized)) {
-    return false;
+    return Number(sttMatchResult?.confidence || 0) < SHORT_PHRASE_ACCEPT_CONFIDENCE;
   }
 
   const currentTarget = getCurrentTargetEntryForLocalRecognition();
@@ -3401,6 +3621,25 @@ function canUseLearnedAudioFallbackAfterStt(sttMatchResult) {
   const requiredKeywordCount = Math.min(2, transcriptTokens.length);
 
   return keywordMatch.count >= requiredKeywordCount || targetMatchScore >= MIN_CORRECTION_SCORE;
+}
+
+function canUseAudioMatchOverWeakStt(audioMatch, sttMatchResult) {
+  if (!audioMatch || !sttMatchResult) {
+    return false;
+  }
+
+  const transcriptIsLongEnough = isLongEnoughForSentenceGuess(
+    normalizeVietnameseText(sttMatchResult.transcript || "")
+  );
+
+  if (transcriptIsLongEnough) {
+    return audioMatch.confidence >= SHORT_TRANSCRIPT_AUDIO_CORRECTION_SCORE;
+  }
+
+  return (
+    Number(sttMatchResult.confidence || 0) < SHORT_PHRASE_ACCEPT_CONFIDENCE &&
+    isShortPhraseAudioMatchStable(audioMatch)
+  );
 }
 
 function notifyRecognitionResult() {
@@ -3492,11 +3731,19 @@ function releaseLocalRecognitionStream() {
 
 function clearLocalRecognitionTimer() {
   if (localRecognitionStopTimer === null) {
+    if (localRecognitionSilenceTimer !== null) {
+      window.clearTimeout(localRecognitionSilenceTimer);
+      localRecognitionSilenceTimer = null;
+    }
     return;
   }
 
   window.clearTimeout(localRecognitionStopTimer);
   localRecognitionStopTimer = null;
+  if (localRecognitionSilenceTimer !== null) {
+    window.clearTimeout(localRecognitionSilenceTimer);
+    localRecognitionSilenceTimer = null;
+  }
 }
 
 function getLocalRecognitionRecordingMs() {
@@ -3514,6 +3761,8 @@ function resetLocalRecognitionAudioStats() {
     speechMs: 0,
     sampleIntervalMs: 100
   };
+  localRecognitionHasSpeechStarted = false;
+  localRecognitionLastSpeechAt = 0;
 }
 
 function updateLocalRecognitionAudioStats(rms, recordingMs) {
@@ -3543,6 +3792,9 @@ function updateLocalRecognitionAudioStats(rms, recordingMs) {
   if (rms >= speechThreshold) {
     localRecognitionAudioStats.speechFrameCount += 1;
     localRecognitionAudioStats.speechMs += localRecognitionAudioStats.sampleIntervalMs;
+    localRecognitionHasSpeechStarted =
+      localRecognitionAudioStats.speechMs >= LOCAL_RECOGNITION_MIN_SPEECH_MS;
+    localRecognitionLastSpeechAt = performance.now();
   }
 }
 
@@ -3608,6 +3860,16 @@ function startLocalSilenceDetection(stream) {
     const recordingMs = getLocalRecognitionRecordingMs();
     updateLocalRecognitionAudioStats(rms, recordingMs);
 
+    if (!localRecognitionHasSpeechStarted) {
+      if (
+        recordingMs >= LOCAL_RECOGNITION_PRE_SPEECH_TIMEOUT_MS &&
+        localRecognitionAudioStats?.speechMs < LOCAL_RECOGNITION_MIN_SPEECH_MS
+      ) {
+        stopLocalRecognition();
+      }
+      return;
+    }
+
     if (rms >= LOCAL_RECOGNITION_SILENCE_RMS) {
       if (localRecognitionSilenceTimer !== null) {
         window.clearTimeout(localRecognitionSilenceTimer);
@@ -3618,12 +3880,13 @@ function startLocalSilenceDetection(stream) {
 
     if (
       recordingMs >= LOCAL_RECOGNITION_MIN_RECORDING_MS &&
+      performance.now() - localRecognitionLastSpeechAt >= LOCAL_RECOGNITION_SILENCE_STOP_MS &&
       localRecognitionSilenceTimer === null
     ) {
       localRecognitionSilenceTimer = window.setTimeout(() => {
         localRecognitionSilenceTimer = null;
         stopLocalRecognition();
-      }, LOCAL_RECOGNITION_SILENCE_STOP_MS);
+      }, 0);
     }
   }, 100);
 }
@@ -3708,6 +3971,36 @@ function buildAiArbiterPayload(matchResult) {
   };
 }
 
+async function warmLocalTranscriber() {
+  try {
+    const response = await fetch("/api/transcribe/status?warm=1", { cache: "no-store" });
+    const payload = await response.json().catch(() => ({}));
+    transcriberWarmupState = payload.state || "unknown";
+
+    if (payload.state === "loading") {
+      setAppState(UI_STATES.READY, `Đang nạp Whisper ${payload.model || "local"} trước để lượt nói đầu nhanh hơn`);
+      window.setTimeout(warmLocalTranscriber, 1400);
+      return;
+    }
+
+    if (payload.state === "ready") {
+      setAppState(
+        UI_STATES.READY,
+        payload.modelLoadMs
+          ? `Whisper local đã sẵn sàng (${Math.round(payload.modelLoadMs)}ms nạp model)`
+          : "Whisper local đã sẵn sàng"
+      );
+      return;
+    }
+
+    if (payload.state === "error") {
+      setAppState(UI_STATES.READY, "Whisper local chưa sẵn sàng, app vẫn dùng matcher giọng làm fallback");
+    }
+  } catch (error) {
+    transcriberWarmupState = "error";
+  }
+}
+
 async function requestAiArbiterDecision(matchResult) {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), AI_ARBITER_TIMEOUT_MS);
@@ -3724,9 +4017,13 @@ async function requestAiArbiterDecision(matchResult) {
     const payload = await response.json().catch(() => ({}));
 
     if (!response.ok || !payload?.decision) {
+      if (response.status === 503) {
+        aiArbiterAvailable = false;
+      }
       return null;
     }
 
+    aiArbiterAvailable = true;
     return payload.decision;
   } catch (error) {
     console.warn("AI arbiter unavailable:", error.message);
@@ -3799,6 +4096,14 @@ async function applyAiArbiter(matchResult) {
     return matchResult;
   }
 
+  if (aiArbiterAvailable === false) {
+    return {
+      ...matchResult,
+      aiSkipped: true,
+      aiReason: "AI arbiter is disabled"
+    };
+  }
+
   const isHighConfidenceLocalResult =
     matchResult.confidence >= 0.9 &&
     (matchResult.inputType === "short_phrase" ||
@@ -3815,6 +4120,45 @@ async function applyAiArbiter(matchResult) {
 
   const decision = await requestAiArbiterDecision(matchResult);
   return decision ? applyAiArbiterDecision(matchResult, decision) : matchResult;
+}
+
+function applyFixedTargetFastPath(matchResult) {
+  const currentTarget = getCurrentTargetEntryForLocalRecognition();
+  if (!currentTarget || !matchResult?.correctedText) {
+    return matchResult;
+  }
+
+  const correctedNormalized = normalizeText(
+    matchResult.personalizedCorrectedText ||
+      matchResult.correctedText ||
+      matchResult.lightlyCorrectedText ||
+      ""
+  );
+  const targetNormalized = normalizeText(currentTarget.text);
+
+  if (!correctedNormalized || correctedNormalized !== targetNormalized) {
+    return matchResult;
+  }
+
+  const confidence = Math.max(Number(matchResult.confidence || 0), FIXED_TARGET_MATCH_CONFIDENCE);
+  return {
+    ...matchResult,
+    confidence,
+    isConfirmed: true,
+    fixedTargetFastPath: true,
+    usedForPlayback: true,
+    correctedText: currentTarget.text,
+    personalizedCorrectedText: currentTarget.text,
+    engineUsed: `${matchResult.engineUsed || matchResult.engine || "local-stt"} + fixed target`,
+    learningSources: Array.from(new Set([...(matchResult.learningSources || []), "fixed target"])),
+    match: {
+      ...(matchResult.match || {}),
+      sentenceId: currentTarget.id,
+      sourceSentenceId: currentTarget.sourceId,
+      rawConfidence: Math.max(Number(matchResult.match?.rawConfidence || 0), confidence),
+      secondBestScore: Math.min(Number(matchResult.match?.secondBestScore || 0), confidence - 0.18)
+    }
+  };
 }
 
 function getAudioMatchMargin(matchResult) {
@@ -3844,6 +4188,39 @@ function isAudioMatchStable(matchResult, options = {}) {
     : AUDIO_MATCH_MIN_MARGIN;
 
   return margin >= requiredMargin;
+}
+
+function isShortPhraseAudioMatchStable(matchResult, options = {}) {
+  if (!matchResult?.match || !matchResult?.correctedText) {
+    return false;
+  }
+
+  const correctedTokenCount = tokenizeText(matchResult.correctedText).length;
+  if (!correctedTokenCount || correctedTokenCount > SHORT_PHRASE_MAX_WORDS) {
+    return false;
+  }
+
+  const margin = getAudioMatchMargin(matchResult);
+  const rawConfidence = Number(matchResult.match.rawConfidence ?? matchResult.confidence ?? 0);
+  const confirmedTakeCount = Number(matchResult.match.confirmedTakeCount || 0);
+  const takeCount = Number(matchResult.match.takeCount || 0);
+  const trustScore = Number(matchResult.match.trustScore || 0);
+  const hasReviewEvidence =
+    matchResult.source === "learned-audio" ||
+    Boolean(matchResult.match.trusted) ||
+    confirmedTakeCount >= 2 ||
+    trustScore >= TRUST_DEFAULT_SCORE + TRUST_CORRECT_BOOST;
+  const requiredConfidence = hasReviewEvidence
+    ? SHORT_PHRASE_AUDIO_REVIEW_AUTO_CONFIDENCE
+    : SHORT_PHRASE_AUDIO_AUTO_CONFIDENCE;
+
+  return (
+    !matchResult.match.unstable &&
+    rawConfidence >= requiredConfidence &&
+    Number(matchResult.confidence || 0) >= requiredConfidence &&
+    margin >= AUDIO_MATCH_SHORT_PHRASE_MIN_MARGIN &&
+    (hasReviewEvidence || takeCount >= 2 || options.allowTemplateBootstrap)
+  );
 }
 
 function getTextMatchMargin(matchResult) {
@@ -3883,6 +4260,10 @@ function finishLocalRecognition(matchResult) {
     return;
   }
 
+  const originalMatchResult = matchResult;
+  const autoTargetTraining = applyAutoTargetTraining(matchResult);
+  matchResult = autoTargetTraining.matchResult;
+
   const correctedTokenCount = normalizeVietnameseText(matchResult.correctedText || "")
     .split(/\s+/)
     .filter(Boolean).length;
@@ -3892,8 +4273,14 @@ function finishLocalRecognition(matchResult) {
     correctedTokenCount <= SHORT_PHRASE_MAX_WORDS &&
     matchResult.confidence >= LOCKED_LEARNED_AUDIO_SCORE &&
     isAudioMatchStable(matchResult, { locked: true });
+  const canUseStableShortAudioPlayback =
+    (matchResult.engine === "audio-template" ||
+      matchResult.source === "audio-template" ||
+      matchResult.source === "learned-audio") &&
+    isShortPhraseAudioMatchStable(matchResult, { allowTemplateBootstrap: true });
   const canUseShortPhrasePlayback =
     canUseLockedLearnedPhrasePlayback ||
+    canUseStableShortAudioPlayback ||
     ((matchResult.engine === "audio-template" ||
         matchResult.source === "learned-audio" ||
         matchResult.inputType === "short_phrase") &&
@@ -3985,6 +4372,28 @@ function finishLocalRecognition(matchResult) {
   emitRecognitionPreview(recognizedTranscript, "final");
   renderMatchedSentence(matchedSentence, canUseCorrectionForPlayback);
   notifyRecognitionResult();
+
+  if (autoTargetTraining.shouldPersist) {
+    persistAutoTargetTraining(
+      autoTargetTraining.heardText,
+      autoTargetTraining.targetText,
+      originalMatchResult
+    )
+      .then((learnedSample) => {
+        renderLearningReviewPanel(
+          learnedSample?.serverPath
+            ? `Review status: tự học "${autoTargetTraining.targetText}" và lưu audio vào server.`
+            : learnedSample
+            ? `Review status: tự học "${autoTargetTraining.targetText}" và lưu audio tạm.`
+            : `Review status: tự học "${autoTargetTraining.targetText}" từ raw STT.`
+        );
+      })
+      .catch((error) => {
+        renderLearningReviewPanel(
+          `Review status: đã tự học "${autoTargetTraining.targetText}", nhưng chưa lưu được audio (${error.message}).`
+        );
+      });
+  }
 
   if (canUseCorrectionForPlayback) {
     updateContextMemory(finalTranscript, matchResult.source || matchResult.engine || "recognition");
@@ -4203,10 +4612,16 @@ async function processLocalRecognitionBlob(blob) {
   const learnedAudioMatchPromise = matchLearnedAudioSample(blob).catch(() => null);
   const sttMatchPromise = (async () => {
     try {
+      const sttResult = buildMatchResultFromTranscript(await transcribeAudioWithLocalServer(blob));
+      const fastPathResult = applyFixedTargetFastPath(sttResult);
       return {
-        result: await applyAiArbiter(
-          buildMatchResultFromTranscript(await transcribeAudioWithLocalServer(blob))
-        )
+        result: fastPathResult.fixedTargetFastPath
+          ? {
+              ...fastPathResult,
+              aiSkipped: true,
+              aiReason: "fixed target matched after personal correction"
+            }
+          : await applyAiArbiter(fastPathResult)
       };
     } catch (error) {
       return { error };
@@ -4308,9 +4723,8 @@ async function processLocalRecognitionBlob(blob) {
       if (
         bestLearnedMatch &&
         bestLearnedMatch.confidence > sttMatchResult.confidence &&
-        isAudioMatchStable(bestLearnedMatch) &&
-        (transcriptIsLongEnough ||
-          bestLearnedMatch.confidence >= SHORT_TRANSCRIPT_AUDIO_CORRECTION_SCORE)
+        (isAudioMatchStable(bestLearnedMatch) || isShortPhraseAudioMatchStable(bestLearnedMatch)) &&
+        (transcriptIsLongEnough || canUseAudioMatchOverWeakStt(bestLearnedMatch, sttMatchResult))
       ) {
         bestLearnedMatch.transcript = sttMatchResult.transcript;
         bestLearnedMatch.engine = sttMatchResult.engine;
@@ -4335,12 +4749,12 @@ async function processLocalRecognitionBlob(blob) {
       const canUseAudioMatch =
         bestAudioMatch &&
         bestAudioMatch.confidence > sttMatchResult.confidence &&
-        isAudioMatchStable(bestAudioMatch) &&
-        (transcriptIsLongEnough ||
-          bestAudioMatch.confidence >= SHORT_TRANSCRIPT_AUDIO_CORRECTION_SCORE);
+        (isAudioMatchStable(bestAudioMatch) || isShortPhraseAudioMatchStable(bestAudioMatch)) &&
+        (transcriptIsLongEnough || canUseAudioMatchOverWeakStt(bestAudioMatch, sttMatchResult));
 
       if (canUseAudioMatch) {
         bestAudioMatch.transcript = sttMatchResult.transcript;
+        bestAudioMatch.source = bestAudioMatch.source || "audio-template";
         bestAudioMatch.engine = sttMatchResult.engine;
         bestAudioMatch.model = sttMatchResult.model;
         bestAudioMatch.timing = {
@@ -4834,9 +5248,27 @@ if (hasSpeechPlayback()) {
   replayButton.disabled = true;
 }
 
+autoTargetTrainingToggle = document.getElementById("autoTargetTrainingToggle");
+if (autoTargetTrainingToggle) {
+  autoTargetTrainingToggle.checked =
+    window.localStorage.getItem(AUTO_TARGET_TRAINING_STORAGE_KEY) !== "0";
+  autoTargetTrainingToggle.addEventListener("change", () => {
+    setAutoTargetTrainingEnabled(autoTargetTrainingToggle.checked);
+    setAppState(
+      UI_STATES.READY,
+      autoTargetTrainingToggle.checked
+        ? "Đã bật tự học theo mục đang chọn"
+        : "Đã tắt tự học theo mục đang chọn"
+    );
+  });
+}
+
 renderMatchedSentence(null);
 warmHybridDatasets();
 warmVoiceTemplateCache();
+if (hasLocalRecognitionSupport()) {
+  warmLocalTranscriber();
+}
 window.setTimeout(resetPersonalLearningFromUrl, 0);
 
 window.voiceCoachControls = {

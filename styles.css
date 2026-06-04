@@ -458,6 +458,214 @@ button:disabled {
   color: #3f5f63;
 }
 
+.training-dashboard {
+  grid-column: 1;
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(66, 68, 90, 0.08);
+  box-shadow: var(--shadow-soft);
+}
+
+.training-dashboard-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.training-dashboard-copy {
+  margin: 8px 0 0;
+  color: var(--text-soft);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.compact-button {
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
+.training-toggle {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(15, 118, 110, 0.06);
+  border: 1px solid rgba(15, 118, 110, 0.12);
+}
+
+.training-toggle input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--accent);
+}
+
+.training-toggle span {
+  display: grid;
+  gap: 3px;
+}
+
+.training-toggle strong {
+  color: var(--text-main);
+  font-size: 0.92rem;
+}
+
+.training-toggle small {
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.training-score-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.training-score-meter {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.12);
+}
+
+.training-score-meter span {
+  display: block;
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), #1d4ed8);
+  transition: width 180ms ease;
+}
+
+.training-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.training-stat {
+  min-width: 0;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(15, 118, 110, 0.06);
+  border: 1px solid rgba(15, 118, 110, 0.1);
+}
+
+.training-stat span {
+  display: block;
+  color: var(--accent-dark);
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.training-stat p {
+  margin: 4px 0 0;
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.training-suggestion-list {
+  display: grid;
+  gap: 8px;
+}
+
+.training-suggestion {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(66, 68, 90, 0.08);
+  text-align: left;
+}
+
+.training-suggestion:hover:not(:disabled) {
+  transform: none;
+}
+
+.training-suggestion strong {
+  color: #111827;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.training-suggestion span {
+  color: var(--text-soft);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.learned-target-panel {
+  display: grid;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.learned-target-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.learned-target-list {
+  display: grid;
+  gap: 8px;
+  max-height: 260px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.learned-target-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(66, 68, 90, 0.08);
+}
+
+.learned-target-item strong {
+  display: block;
+  color: #111827;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.learned-target-item span {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.learned-target-item button {
+  min-height: 38px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: 0.82rem;
+}
+
 .record-target-meta {
   display: flex;
   flex-wrap: wrap;
@@ -689,8 +897,13 @@ button:disabled {
   }
 
   .recorder-config-grid,
-  .recording-rules {
+  .recording-rules,
+  .training-stat-grid {
     grid-template-columns: 1fr;
+  }
+
+  .training-dashboard-header {
+    flex-direction: column;
   }
 
   .recorder-card > .recorder-control-row {

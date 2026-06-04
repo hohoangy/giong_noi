@@ -128,6 +128,64 @@
           </p>
         </div>
 
+        <section class="training-dashboard" aria-labelledby="trainingDashboardTitle">
+          <div class="training-dashboard-header">
+            <div>
+              <p class="section-label" id="trainingDashboardTitle">Tiến độ học giọng</p>
+              <p class="training-dashboard-copy" id="trainingReadinessText">
+                Chưa đủ dữ liệu để đánh giá.
+              </p>
+            </div>
+            <button class="secondary-button compact-button" id="jumpTrainingSuggestionButton" type="button">
+              Tới mục đề xuất
+            </button>
+          </div>
+
+          <label class="training-toggle">
+            <input id="autoTargetTrainingToggle" type="checkbox" checked />
+            <span>
+              <strong>Tự học theo mục đang chọn</strong>
+              <small>Khi luyện câu cố định, app sẽ lưu audio/STT sai thành câu đang hiển thị.</small>
+            </span>
+          </label>
+
+          <div class="training-score-row">
+            <div class="training-score-meter" aria-hidden="true">
+              <span id="trainingReadinessBar"></span>
+            </div>
+            <span class="confidence-pill" id="trainingReadinessScore">0%</span>
+          </div>
+
+          <div class="training-stat-grid">
+            <div class="training-stat">
+              <span id="trainingRecordedCount">0/0</span>
+              <p>Take đã tải</p>
+            </div>
+            <div class="training-stat">
+              <span id="trainingReviewCount">0/0</span>
+              <p>Review đúng/sai</p>
+            </div>
+            <div class="training-stat">
+              <span id="trainingStableCount">0</span>
+              <p>Mục đủ nền</p>
+            </div>
+          </div>
+
+          <div class="training-suggestion-list" id="trainingSuggestionList">
+            <p class="meta-text">Sau khi thu hoặc review, app sẽ đề xuất mục cần luyện tiếp.</p>
+          </div>
+
+          <div class="learned-target-panel">
+            <div class="learned-target-header">
+              <p class="section-label">Mục đã học</p>
+              <span class="confidence-pill" id="learnedTargetCount">0</span>
+            </div>
+            <div class="learned-target-list" id="learnedTargetList">
+              <p class="meta-text">Chưa có mục nào đủ dữ liệu học.</p>
+            </div>
+          </div>
+        </section>
+
         <div class="recording-status-row">
           <span class="status-dot ready" id="recordingStatusDot"></span>
           <span class="status-text" id="recordingStatusText">
